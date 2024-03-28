@@ -1,0 +1,24 @@
+.nav{
+    position: absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    background-color: whitesmoke;
+    display: flex;
+    z-index: 10;
+    align-items: center; /* Align items vertically */
+}
+
+.nav span{
+    display: inline-block;
+    color: black;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size: 2rem;
+    padding:1rem 1rem;
+}
+
+.nav img{
+    display: inline-block;
+    height: 85px;
+    margin-left: 2rem;
+}
