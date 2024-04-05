@@ -1,14 +1,14 @@
 mapboxgl.accessToken = 'pk.eyJ1Ijoiem9lbGluMTEyMiIsImEiOiJjbDZlNzBpaWEwMHR3M2VzZTFtbjc0azlkIn0.8zDjJUVT6PoiR8tj6Re7bA';
 
 var nycBounds = [
-    [-74.03, 40.70], // Southwest coordinates of NYC
-    [ -74.1, 40.72]  // Northeast coordinates of NYC
+    [-74.03, 40.699], // Southwest coordinates of NYC
+    [-73.9979, 40.7173]  // Northeast coordinates of NYC
 ];
 
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/zoelin1122/clgk7vp2i013j01ppuk7qmu2e', // Replace with your preferred Mapbox style
-    center: [-74.01045300426145, 40.70999225084837], // Centered at ADNY coordinates
+    center: [-74.01062599304956, 40.70848542095962], // Centered at ADNY coordinates
     zoom: 14.4,
     maxBounds: nycBounds
 });
