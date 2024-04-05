@@ -6,10 +6,6 @@
     <title>ADNY Placemaking Map</title>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-    </style>
 </head>
 <body>
 <div class="nav">
@@ -17,9 +13,16 @@
     <span>PLACEMAKING MAP DATABASE</span>
 </div>
 <div id="map"></div>
-
+<div class="row">
+    <div class="column1"></div>
+    <div class="column2">
+        <div>
+        DATA HERE
+        </div>
+    </div>
+</div>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 
 </body>
 </html>
