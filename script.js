@@ -1,15 +1,15 @@
 mapboxgl.accessToken = 'pk.eyJ1Ijoiem9lbGluMTEyMiIsImEiOiJjbDZlNzBpaWEwMHR3M2VzZTFtbjc0azlkIn0.8zDjJUVT6PoiR8tj6Re7bA';
 
 var nycBounds = [
-    [-74.03, 40.699], // Southwest coordinates of NYC
-    [-73.9979, 40.7173]  // Northeast coordinates of NYC
+    [-74.03008569208115, 40.68856158972661], // Southwest coordinates of NYC
+    [-73.9908569208115, 40.72856158972661]  // Northeast coordinates of NYC
 ];
 
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/zoelin1122/clgk7vp2i013j01ppuk7qmu2e', // Replace with your preferred Mapbox style
-    center: [-74.01062599304956, 40.70848542095962], // Centered at ADNY coordinates
-    zoom: 14.4,
+    center: [-74.01008569208115, 40.70856158972661], // Centered at ADNY coordinates
+    zoom: 14.65,
     maxBounds: nycBounds
 });
 
@@ -189,20 +189,20 @@ map.on('load', function () {
 
 
     // ADNY BOUNDARY
-    map.addSource('adny_only', {
-        type: 'geojson',
-        data: 'https://data.cityofnewyork.us/resource/7jdm-inj8.geojson?bid=Downtown%20Alliance%20BID'
-    });
+    // map.addSource('adny_only', {
+    //     type: 'geojson',
+    //     data: 'https://data.cityofnewyork.us/resource/7jdm-inj8.geojson?bid=Downtown%20Alliance%20BID'
+    // });
 
-    map.addLayer({
-        'id': 'adny-boundary',
-        'type': 'line',
-        'source': 'adny_only',
-        'paint': {
-            'line-color': '#FF0000', // Red color for the outline
-            'line-width': 2 // Adjust the width of the outline as needed
-        }
-    });
+    // map.addLayer({
+    //     'id': 'adny-boundary',
+    //     'type': 'line',
+    //     'source': 'adny_only',
+    //     'paint': {
+    //         'line-color': '#FF0000', // Red color for the outline
+    //         'line-width': 2 // Adjust the width of the outline as needed
+    //     }
+    // });
 
     map.addSource('adny_mask', {
         type: 'geojson',
@@ -216,6 +216,16 @@ map.on('load', function () {
         'paint': {
             'fill-color':'#000000',
             'fill-opacity': 0.3
+        }
+    });
+
+    map.addLayer({
+        'id': 'adny-boundary',
+        'type': 'line',
+        'source': 'adny_mask',
+        'paint': {
+            'line-color': '#FF0000', // Red color for the outline
+            'line-width': 2 // Adjust the width of the outline as needed
         }
     });
 
@@ -263,16 +273,88 @@ map.on('load', function () {
             console.error('No features found in mask layer.');
         }
     });
+    var style = map.getStyle();
+
+    // Extract layer IDs from the style object
+    var layerIds = style.layers.map(layer => layer.id);
+
+    // Log the list of layer IDs to the console
+    console.log('Layer IDs:', layerIds);
 
 });
 
 //FUNCTIONS
 // Add click event listener to the map
 map.on('click', function (e) {
-    // Get the coordinates of the clicked point
     var lngLat = e.lngLat;
+    var zoom = map.getZoom(); // Get the current zoom level
 
     // Print the coordinates to the console
-    console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat);
+    console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat+ ', Zoom: ' + zoom);
 });
 
+// After the last frame rendered before the map enters an "idle" state.
+map.on('idle', () => {
+  // If these two layers were not added to the map, abort 
+  if (!map.getLayer('adny-ped-poly') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-ps-points')|| !map.getLayer('nyc-openstreet-lines')) {
+  return;
+  }
+   
+  // Enumerate ids of the layers.
+  const toggleableLayerIds = [
+        "adny-ped-poly",
+        "nyc-parks-polygons",
+        "nyc-train-lines",
+        "adny-ps-points",
+        "nyc-pop-points",
+        "nyc-openstreet-lines"
+    ];
+   
+  // Set up the corresponding toggle button for each layer.
+  for (const id of toggleableLayerIds) {
+  // Skip layers that already have a button set up.
+  if (document.getElementById(id)) {
+  continue;
+  }
+   
+  // Create a link.
+  const link = document.createElement('a');
+  link.id = id;
+  link.href = '#';
+  link.textContent = id;
+  if ((link.id != 'Food insecurity')&&(link.id != 'Congestion pricing boundary')){
+    link.className = 'active';
+  };
+
+
+   
+  // Show or hide layer when the toggle is clicked.
+  link.onclick = function (e) {
+  const clickedLayer = this.textContent;
+  e.preventDefault();
+  e.stopPropagation();
+   
+  const visibility = map.getLayoutProperty(
+  clickedLayer,
+  'visibility'
+  );
+   
+  // Toggle layer visibility by changing the layout object's visibility property.
+  if (visibility === 'visible') {
+  map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+  this.className = '';
+  } else {
+  this.className = 'active';
+  map.setLayoutProperty(
+  clickedLayer,
+  'visibility',
+  'visible'
+  );
+  }
+  };
+   
+  const menus = document.getElementById('menu');
+  menus.appendChild(link);
+
+  }
+  });
