@@ -23,7 +23,7 @@ map.on('load', function () {
     });
 
     map.addLayer({
-        'id': 'adny-ped-polygon',
+        'id': 'adny-pedestrain-estimation',
         'type': 'fill',
         'source': 'adny-ped',
         'paint': {
@@ -38,7 +38,7 @@ map.on('load', function () {
         }
     });
 
-    map.on('click', 'adny-ped-polygon', function(e){
+    map.on('click', 'adny-pedestrain-estimation', function(e){
         let number = Math.round(e.features[0].properties["Median Count"]);
     
         new mapboxgl.Popup()
@@ -139,8 +139,10 @@ map.on('load', function () {
         'type': 'circle',
         'source': 'adny-ps',
         'paint': {
-            'circle-color': '#39ff14', // Adjust color as needed
-            'circle-radius': 5
+            'circle-color': '#D2042D', // Adjust color as needed
+            'circle-radius': 6,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#000",
         }
     });
 
@@ -184,8 +186,10 @@ map.on('load', function () {
         'type': 'circle',
         'source': 'nyc-pop',
         'paint': {
-            'circle-color': '#ff0000', // Adjust color as needed
-            'circle-radius': 5
+            'circle-color': '#0000FF', // Adjust color as needed
+            'circle-radius': 6,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#000"
         },
         'filter': ['all',
         ['==', 'borocode', '1'],
@@ -202,11 +206,86 @@ map.on('load', function () {
         let detail = e.features[0].properties["building_location"];
         let size = e.features[0].properties["size_required"];
         let hours = e.features[0].properties["hour_of_access_required"];
-
+        let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+        let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
     
+        // Construct the road view URL with the extracted latitude and longitude
+        let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+    
+        // Create the HTML content for the popup
+        let popupContent = `
+            <h1>${name}</h1>
+            <br>
+            ${detail}
+            <br>
+            ${size} sqf | ${hours}
+            <br>
+            <a href="${roadViewUrl}" target="_blank">See Road View</a>
+        `;
+    
+        // Create a new popup and set its content
         new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML("<h1>"+ name + '</h1> <br>' + detail + '<br>' + size + '  |  ' + hours)
+            .setHTML(popupContent)
+            .addTo(map);
+    });
+
+    map.addLayer({
+        'id': 'adny-boundary',
+        'type': 'line',
+        'source': 'adny_mask',
+        'paint': {
+            'line-color': '#FF0000', // Red color for the outline
+            'line-width': 2 // Adjust the width of the outline as needed
+        }
+    });
+
+    //NYC DATA ON LANDMARKS
+    //https://data.cityofnewyork.us/resource/buis-pvji.geojson
+    map.addSource('nyc-od-landmarks', {
+        type: 'geojson',
+        data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
+    });
+
+    map.addLayer({
+        'id': 'nyc-landmarks',
+        'type': 'fill',
+        'source': 'nyc-od-landmarks',
+        'paint': {
+            'fill-color':'#0000FF',
+            'fill-opacity':0.1,
+            'fill-outline-color': '#0000FF', // Outline color for the polygons
+            'fill-outline-width': 1 // Width of the outline in pixels
+        }
+    });
+
+    map.on('click', 'nyc-landmarks', function(e){
+        let name = e.features[0].properties["lpc_name"];
+        let detail = e.features[0].properties["address"];
+        let alt = e.features[0].properties["lpc_altern"];
+        let url = e.features[0].properties["url_report"];
+        let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+        let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+    
+        // Construct the road view URL with the extracted latitude and longitude
+        let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+    
+        // Create the HTML content for the popup
+        let popupContent = `
+            <h1>${name}</h1>
+            <br>
+            ${detail}
+            <br>
+            ${alt !== undefined ? alt + '<br>' : ''}
+            <a href="${url}" target="_blank">See Report of Designation</a>
+            <br>
+            <a href="${roadViewUrl}" target="_blank">See Road View</a>
+        `;
+    
+        // Create a new popup and set its content
+        new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(popupContent)
             .addTo(map);
     });
 
@@ -264,9 +343,9 @@ map.on('load', function () {
         'type': 'line',
         'source': 'nyc-openstreet',
         'paint': {
-            'line-color': '#FF0000', 
+            'line-color': '#AAFF00', 
             'line-width': 10,
-            'line-opacity': .5
+            'line-opacity': .7
         }
     });
 
@@ -318,9 +397,7 @@ function transformLayerId(id) {
     transformedId = transformedId.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     
     // Replace 'nyc' with 'NYC' and 'adny' with 'ADNY'
-    transformedId = transformedId.replace(/\bNyc\b/g, 'NYC').replace(/\bAdny\b/g, 'ADNY');
-    
-
+    transformedId = transformedId.replace(/\bNyc\b/g, 'NYC').replace(/\bAdny\b/g, 'ADNY').replace(/\Pop\b/g, 'POP');
     return transformedId;
 }
 
@@ -336,18 +413,19 @@ map.on('click', function (e) {
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {
   // If these two layers were not added to the map, abort 
-  if (!map.getLayer('adny-ped-polygon') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')) {
+  if (!map.getLayer('adny-pedestrain-estimation') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')) {
   return;
   }
    
   // Enumerate ids of the layers.
   const toggleableLayerIds = [
-        "adny-ped-polygon",
         "adny-public-spaces",
+        "adny-pedestrain-estimation",
         "nyc-pop-points",
         "nyc-parks-polygons",
         "nyc-openstreet-lines",
-        "nyc-train-lines"
+        "nyc-train-lines",
+        "nyc-landmarks"
     ];
    
   // Set up the corresponding toggle button for each layer.
