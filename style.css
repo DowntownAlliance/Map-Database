@@ -71,7 +71,10 @@ body { margin: 0; padding: 0; }
     background-color: aquamarine;
 }
 
-a {
+.activeButton  a, 
+.button  a {
     text-decoration: none;
     color: inherit;
 }
+
+mapboxgl-popup-content

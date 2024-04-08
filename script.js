@@ -149,11 +149,27 @@ map.on('load', function () {
         let detail = e.features[0].properties["Address"];
         let size = e.features[0].properties["Usable Area (sf)"];
         let hours = e.features[0].properties["Agency Oversight"];
-
+        let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+        let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
     
+        // Construct the road view URL with the extracted latitude and longitude
+        let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+    
+        // Create the HTML content for the popup
+        let popupContent = `
+            <h1>${name}</h1>
+            <br>
+            ${detail}
+            <br>
+            ${size} sqf | ${hours}
+            <br>
+            <a href="${roadViewUrl}" target="_blank">See Road View</a>
+        `;
+    
+        // Create a new popup and set its content
         new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML("<h1>"+ name + '</h1> <br>' + detail + '<br>' + size + 'sqf  |  ' + hours)
+            .setHTML(popupContent)
             .addTo(map);
     });
 
