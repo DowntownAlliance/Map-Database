@@ -1,3 +1,4 @@
+
 mapboxgl.accessToken = 'pk.eyJ1Ijoiem9lbGluMTEyMiIsImEiOiJjbDZlNzBpaWEwMHR3M2VzZTFtbjc0azlkIn0.8zDjJUVT6PoiR8tj6Re7bA';
 
 var nycBounds = [
@@ -13,6 +14,117 @@ var map = new mapboxgl.Map({
     maxBounds: nycBounds
 });
 
+async function fetchCSVAndConvertToGeoJSON(csvUrl) {
+    const response = await fetch(csvUrl);
+    const csvData = await response.text();
+
+    const geojsonFeatures = [];
+
+    $.csv.toObjects(csvData, { headers: true })
+        .forEach((row) => {
+            // Convert each row into a GeoJSON feature
+            const feature = {
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [parseFloat(row['Longitude Point']), parseFloat(row['Latitude Point'])]
+                },
+                properties: {
+                    // Populate properties as needed from CSV columns
+                    JobNumber: row['Job Number'],
+                    BoroughName: row['Borough Name'],
+                    CountPermits: parseInt(row['Count Permits']),
+                    FirstPermitDate: row['First Permit Date'],
+                    CurrentDate: new Date(row['Current Date']),
+                    Age: parseInt(row['Age']),
+                    PermitExpirationDate: new Date(row['Permit Expiration Date']),
+                    SidewalkShedLinearFeet: parseInt(row['Sidewalk Shed/Linear Feet']),
+                    ConstructionMaterial: row['Construction Material'],
+                    CurrentJobStatus: row['Current Job Status'],
+                    BINNumber: parseInt(row['BIN Number']),
+                    CommunityBoard: parseInt(row['Community Board']),
+                    ApplicantBusinessName: row['Applicant Business Name'],
+                    HouseNumber: row['House Number'],
+                    StreetName: row['Street Name'],
+                    Activity: row['activity'],
+                    Commercial: row['Commercial'] === '1' // Convert to boolean
+                }
+            };
+
+            geojsonFeatures.push(feature);
+        });
+
+    const geojson = {
+        type: 'FeatureCollection',
+        features: geojsonFeatures
+    };
+
+    // Function to add GeoJSON layer to the map
+    function addGeoJSONLayerToMap(geojson) {
+        map.addSource('active-sheds-data', {
+            type: 'geojson',
+            data: geojson
+        });
+
+        map.addLayer({
+            id: 'nyc-active-sheds',
+            type: 'circle',
+            source: 'active-sheds-data',
+            paint: {
+                'circle-color': '#FFBF00', // Adjust color as needed
+                'circle-radius': 6,
+                "circle-stroke-width": 1,
+                "circle-stroke-color": "#000",
+            },
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'none'
+            }
+        });
+
+        map.on('click', 'nyc-active-sheds', function(e){
+            let name = e.features[0].properties["HouseNumber"];
+            let name2 = e.features[0].properties["StreetName"];
+            let detail = e.features[0].properties["SidewalkShedLinearFeet"];
+            let date = new Date(e.features[0].properties["FirstPermitDate"]);
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+            let day = String(date.getDate()).padStart(2, '0');
+            let formattedDate = `${year}-${month}-${day}`;
+            let age = e.features[0].properties["Age"];
+            let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+            let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+        
+            // Construct the road view URL with the extracted latitude and longitude
+            let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+        
+            // Create the HTML content for the popup
+            let popupContent = `
+                DOB Scaffolding
+                <h1>${name} ${name2}</h1>
+                <br>
+                ${detail} feet long
+                <br>
+                Issued ${formattedDate} | Been up ${age} days
+                <br>
+                <a href="${roadViewUrl}" target="_blank">See Road View</a>
+            `;
+        
+            // Create a new popup and set its content
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(map);
+        });
+    }
+
+
+    addGeoJSONLayerToMap(geojson);
+}
+
+// Call the function to fetch CSV data and convert to GeoJSON
+const csvUrl = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
+fetchCSVAndConvertToGeoJSON(csvUrl);
 
 map.on('load', function () {
 
@@ -76,7 +188,7 @@ map.on('load', function () {
     
         new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML("<h1>"+ name + '</h1> <br>' + detail + '<br>' + sqf)
+            .setHTML("NYC Parks Property <br> <h1>"+ name + '</h1> <br>' + detail + '<br>' + sqf)
             .addTo(map);
     });
 
@@ -159,6 +271,7 @@ map.on('load', function () {
     
         // Create the HTML content for the popup
         let popupContent = `
+            ADNY Identified Public Space
             <h1>${name}</h1>
             <br>
             ${detail}
@@ -214,6 +327,7 @@ map.on('load', function () {
     
         // Create the HTML content for the popup
         let popupContent = `
+            DCP's list of POPs
             <h1>${name}</h1>
             <br>
             ${detail}
@@ -230,16 +344,6 @@ map.on('load', function () {
             .addTo(map);
     });
 
-    map.addLayer({
-        'id': 'adny-boundary',
-        'type': 'line',
-        'source': 'adny_mask',
-        'paint': {
-            'line-color': '#FF0000', // Red color for the outline
-            'line-width': 2 // Adjust the width of the outline as needed
-        }
-    });
-
     //NYC DATA ON LANDMARKS
     //https://data.cityofnewyork.us/resource/buis-pvji.geojson
     map.addSource('nyc-od-landmarks', {
@@ -254,8 +358,10 @@ map.on('load', function () {
         'paint': {
             'fill-color':'#0000FF',
             'fill-opacity':0.1,
-            'fill-outline-color': '#0000FF', // Outline color for the polygons
-            'fill-outline-width': 1 // Width of the outline in pixels
+        },
+        'layout': {
+            // Make the layer visible by default.
+            'visibility': 'none'
         }
     });
 
@@ -272,6 +378,7 @@ map.on('load', function () {
     
         // Create the HTML content for the popup
         let popupContent = `
+            LPC's Designated Landmarks
             <h1>${name}</h1>
             <br>
             ${detail}
@@ -425,7 +532,8 @@ map.on('idle', () => {
         "nyc-parks-polygons",
         "nyc-openstreet-lines",
         "nyc-train-lines",
-        "nyc-landmarks"
+        "nyc-landmarks",
+        "nyc-active-sheds"
     ];
    
   // Set up the corresponding toggle button for each layer.
@@ -442,7 +550,7 @@ map.on('idle', () => {
     link.id = id;
     link.href = '#';
     link.textContent = transformLayerId(id);
-    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')){
+    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')){
         link.className = 'active';
         button.className = 'activeButton'
     };
