@@ -23,7 +23,7 @@ map.on('load', function () {
     });
 
     map.addLayer({
-        'id': 'adny-ped-poly',
+        'id': 'adny-ped-polygon',
         'type': 'fill',
         'source': 'adny-ped',
         'paint': {
@@ -38,7 +38,7 @@ map.on('load', function () {
         }
     });
 
-    map.on('click', 'adny-ped-poly', function(e){
+    map.on('click', 'adny-ped-polygon', function(e){
         let number = Math.round(e.features[0].properties["Median Count"]);
     
         new mapboxgl.Popup()
@@ -60,7 +60,11 @@ map.on('load', function () {
         'paint': {
             'fill-color': '#93C572', // Adjust color as needed
             'fill-opacity': .8
-        }
+        },
+        'layout': {
+          // Make the layer visible by default.
+          'visibility': 'none'
+          }
     });
 
     map.on('click', 'nyc-parks-polygons', function(e){
@@ -131,7 +135,7 @@ map.on('load', function () {
     });
 
     map.addLayer({
-        'id': 'adny-ps-points',
+        'id': 'adny-public-spaces',
         'type': 'circle',
         'source': 'adny-ps',
         'paint': {
@@ -140,7 +144,7 @@ map.on('load', function () {
         }
     });
 
-    map.on('click', 'adny-ps-points', function(e){
+    map.on('click', 'adny-public-spaces', function(e){
         let name = e.features[0].properties["Name"];
         let detail = e.features[0].properties["Address"];
         let size = e.features[0].properties["Usable Area (sf)"];
@@ -170,7 +174,11 @@ map.on('load', function () {
         'filter': ['all',
         ['==', 'borocode', '1'],
         ['in', 'zip_code', '10007', '10038', '10004', '10006', '10005', '10038']
-        ]
+        ],
+        'layout': {
+          // Make the layer visible by default.
+          'visibility': 'none'
+          }
     });
 
     map.on('click', 'nyc-pop-points', function(e){
@@ -246,33 +254,33 @@ map.on('load', function () {
         }
     });
 
-    // Query the mask layer to get its geometry
-    map.querySourceFeatures('adny_mask', { sourceLayer: 'adny_mask' }, function (features) {
-        console.log(features)
-        if (features.length > 0) {
-            var maskGeometry = features[0].geometry;
-            console.log(maskGeometry)
-            // Filter subway lines layer
-            var subwayFilter = ['intersects', ['geometry'], maskGeometry];
-            map.setFilter('nyc-train-lines', subwayFilter);
+    // // Query the mask layer to get its geometry
+    // map.querySourceFeatures('adny_mask', { sourceLayer: 'adny_mask' }, function (features) {
+    //     console.log(features)
+    //     if (features.length > 0) {
+    //         var maskGeometry = features[0].geometry;
+    //         console.log(maskGeometry)
+    //         // Filter subway lines layer
+    //         var subwayFilter = ['intersects', ['geometry'], maskGeometry];
+    //         map.setFilter('nyc-train-lines', subwayFilter);
 
-            // Filter pop points layer
-            var popFilter = ['intersects', ['geometry'], maskGeometry];
-            map.setFilter('nyc-pop-points', popFilter);
+    //         // Filter pop points layer
+    //         var popFilter = ['intersects', ['geometry'], maskGeometry];
+    //         map.setFilter('nyc-pop-points', popFilter);
 
-            // Filter parks layer
-            var parksFilter = ['intersects', ['geometry'], maskGeometry];
-            map.setFilter('nyc-parks-polygons', parksFilter);
+    //         // Filter parks layer
+    //         var parksFilter = ['intersects', ['geometry'], maskGeometry];
+    //         map.setFilter('nyc-parks-polygons', parksFilter);
 
-            // Filter openstreet lines layer
-            var openstreetFilter = ['intersects', ['geometry'], maskGeometry];
-            map.setFilter('nyc-openstreet-lines', openstreetFilter);
+    //         // Filter openstreet lines layer
+    //         var openstreetFilter = ['intersects', ['geometry'], maskGeometry];
+    //         map.setFilter('nyc-openstreet-lines', openstreetFilter);
 
-            // Now the layers will only display features that intersect with the LARGE ADNY BOUNDARY
-        } else {
-            console.error('No features found in mask layer.');
-        }
-    });
+    //         // Now the layers will only display features that intersect with the LARGE ADNY BOUNDARY
+    //     } else {
+    //         console.error('No features found in mask layer.');
+    //     }
+    // });
     var style = map.getStyle();
 
     // Extract layer IDs from the style object
@@ -284,6 +292,22 @@ map.on('load', function () {
 });
 
 //FUNCTIONS
+
+// Function to transform layer ID
+function transformLayerId(id) {
+    // Replace hyphens with spaces
+    let transformedId = id.replace(/-/g, ' ');
+    
+    // Title case the text
+    transformedId = transformedId.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    
+    // Replace 'nyc' with 'NYC' and 'adny' with 'ADNY'
+    transformedId = transformedId.replace(/\bNyc\b/g, 'NYC').replace(/\bAdny\b/g, 'ADNY');
+    
+
+    return transformedId;
+}
+
 // Add click event listener to the map
 map.on('click', function (e) {
     var lngLat = e.lngLat;
@@ -296,18 +320,18 @@ map.on('click', function (e) {
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {
   // If these two layers were not added to the map, abort 
-  if (!map.getLayer('adny-ped-poly') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-ps-points')|| !map.getLayer('nyc-openstreet-lines')) {
+  if (!map.getLayer('adny-ped-polygon') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')) {
   return;
   }
    
   // Enumerate ids of the layers.
   const toggleableLayerIds = [
-        "adny-ped-poly",
-        "nyc-parks-polygons",
-        "nyc-train-lines",
-        "adny-ps-points",
+        "adny-ped-polygon",
+        "adny-public-spaces",
         "nyc-pop-points",
-        "nyc-openstreet-lines"
+        "nyc-parks-polygons",
+        "nyc-openstreet-lines",
+        "nyc-train-lines"
     ];
    
   // Set up the corresponding toggle button for each layer.
@@ -319,42 +343,48 @@ map.on('idle', () => {
     
     // Create a link.
     const link = document.createElement('a');
-        link.id = id;
-        link.href = '#';
-        link.textContent = id;
-        if ((link.id != 'Food insecurity')&&(link.id != 'Congestion pricing boundary')){
-            link.className = 'active';
-        };
+    const button = document.createElement('div');
+    button.className = 'button'
+    link.id = id;
+    link.href = '#';
+    link.textContent = transformLayerId(id);
+    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')){
+        link.className = 'active';
+        button.className = 'activeButton'
+    };
 
 
+    
+    // Show or hide layer when the toggle is clicked.
+    link.onclick = function (e) {
+        const clickedLayer = this.id;
+        e.preventDefault();
+        e.stopPropagation();
         
-        // Show or hide layer when the toggle is clicked.
-        link.onclick = function (e) {
-            const clickedLayer = this.textContent;
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const visibility = map.getLayoutProperty(
+        const visibility = map.getLayoutProperty(
+            clickedLayer,
+            'visibility'
+        );
+        
+        // Toggle layer visibility by changing the layout object's visibility property.
+        if (visibility === 'visible') {
+            map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+            this.className = '';
+            this.parentElement.className = 'button';
+        } else {
+            this.className = 'active';
+            this.parentElement.className = 'activeButton';
+            map.setLayoutProperty(
                 clickedLayer,
-                'visibility'
+                'visibility',
+                'visible'
             );
-            
-            // Toggle layer visibility by changing the layout object's visibility property.
-            if (visibility === 'visible') {
-                map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-                this.className = '';
-            } else {
-                this.className = 'active';
-                map.setLayoutProperty(
-                    clickedLayer,
-                    'visibility',
-                    'visible'
-                );
-            }
-        };  
-        
-        const menus = document.getElementById('menu');
-        menus.appendChild(link);
+        }
+    };  
+    
+    const menus = document.getElementById('menu');
+    button.appendChild(link)
+    menus.appendChild(button);
 
     }
 });
