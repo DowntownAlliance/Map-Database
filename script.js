@@ -9,10 +9,11 @@ var nycBounds = [
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/zoelin1122/clgk7vp2i013j01ppuk7qmu2e', // Replace with your preferred Mapbox style
-    center: [-74.01008569208115, 40.70856158972661], // Centered at ADNY coordinates
+    center: [-74.01008569208115, 40.70756158972661], // Centered at ADNY coordinates
     zoom: 14.65,
     maxBounds: nycBounds
 });
+
 
 async function fetchCSVAndConvertToGeoJSON(csvUrl) {
     const response = await fetch(csvUrl);
@@ -154,7 +155,8 @@ map.on('load', function () {
     map.on('mousemove', 'adny-pedestrain-estimation', function(e) {
         if (e.features.length > 0) {
             let number = Math.round(e.features[0].properties["Median Count"]);
-            document.getElementById('pedestrian-count').textContent = number;
+            let formattedNumber = number.toLocaleString();
+            document.getElementById('pedestrian-count').textContent = formattedNumber;
         } else {
             // If no features are found under the cursor, reset the content
             document.getElementById('pedestrian-count').textContent = '-';
@@ -570,12 +572,12 @@ map.on('idle', () => {
     
     // Create a link.
     const link = document.createElement('a');
-    link.className = 'button'
+    link.className = 'toggle'
     link.id = id;
     link.href = '#';
     link.textContent = transformLayerId(id);
     if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
-        link.className = 'active';
+        link.className = 'activeToggle';
     };
 
 
@@ -594,10 +596,10 @@ map.on('idle', () => {
         // Toggle layer visibility by changing the layout object's visibility property.
         if (visibility === 'visible') {
             map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-            this.className = 'button';
-            // this.parentElement.className = 'button';
+            this.className = 'toggle';
+            // this.parentElement.className = 'toggle';
         } else {
-            this.className = 'active';
+            this.className = 'activeToggle';
             // this.parentElement.className = 'activeButton';
             map.setLayoutProperty(
                 clickedLayer,
@@ -608,7 +610,17 @@ map.on('idle', () => {
     };  
     
     const menus = document.getElementById('menu');
-    // button.appendChild(link)
+    // toggle.appendChild(link)
     menus.appendChild(link);
     }
 });
+
+// Add the control to the map.
+map.addControl(
+    new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        placeholder: 'Search for a location...',
+        proximity: "-74.01008569208115, 40.70756158972661"
+    })
+);

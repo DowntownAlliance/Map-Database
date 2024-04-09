@@ -8,18 +8,27 @@
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" type="image/png" href="favicon.png">
     <script src='https://npmcdn.com/csv2geojson@latest/csv2geojson.js'></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
 </head>
 <body>
 <div class="nav">
-    <img src="img/logo.png" alt="logo">
-    <span>PLACEMAKING MAP DATABASE</span>
+    <div>
+        <img src="img/logo.png" alt="logo">
+        <span id="title">PLACEMAKING MAP DATABASE</span>
+    </div>
+    <div class="navButtons">
+        <div class="navButton" id="data"><h2>DATA</h2></div>
+        <div class="navButton" id="data"><h2>GIT</h2></div>
+    </div>
 </div>
 <div id="map"></div>
 <div id="estimation-info">
-    Estimated Pedestrian Count: <br/> <span id="pedestrian-count">-</span> <br/> people pass through a day
+    ESTIMATED PEDESTRIAN COUNT <br/> <span id="pedestrian-count">-</span> <b>people pass through a day</b>
 </div>
 <div class="row">
     <div class="column1"></div>
