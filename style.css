@@ -30,23 +30,33 @@
 
 .column1 {
     flex: 3;
-    width: 75%;
+    width: 75vw;
     background-color: #f1f1f1; /* Just for visualization */
 }
 
 .column2 {
     flex: 1;
-    width: 25%;
+    width: 25vw;
     height: 100vh;
+    overflow: auto;
     background-color: white; /* Add background color for visibility */
     align-items: center;
     font-family: Arial, Helvetica, sans-serif;
-    font-weight: lighter;
+    font-size: .8rem;
 }
 
-body { margin: 0; padding: 0; }
+body { 
+    margin: 0; 
+    padding: 0; 
+}
 
-#map { position: absolute; top: 0; bottom: 0; width: 75%; }
+#map { 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    width: 75%; 
+    height: 100vh;
+}
 
 #menu {
     display: flex;
@@ -54,27 +64,44 @@ body { margin: 0; padding: 0; }
     padding: 6.5rem 1rem 1rem 1rem;
 }
 
-.button, .activeButton {
-    display: flex;
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
-    padding: 1rem 5px;
-    margin: .5rem;
-    border-radius: 2rem;
-}
+
 
 .button {
     background-color: gainsboro;
 }
 
-.activeButton {
-    background-color: aquamarine;
+.active {
+    background-color: rgba(127, 197, 6, 0.7); 
 }
 
-.activeButton  a, 
-.button  a {
+.button a, 
+.active a{
     text-decoration: none;
     color: inherit;
+    text-align: center;
+    display: flex;
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    padding: .7rem 15px;
+    margin: .3rem;
+    border-radius: 2rem;
+    font-weight: bold;
 }
 
-mapboxgl-popup-content
+#estimation-info{
+    position: absolute; 
+    top: 7rem; 
+    left: 2rem; 
+    width: 210px;
+    padding: 1rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: rgba(0, 0, 0, 0.646);
+    color: #f1f1f1;
+    font-weight: lighter;
+    text-align: center;
+}
+
+#pedestrian-count{
+    font-size: 2rem;
+    font-weight: bold;
+}

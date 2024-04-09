@@ -150,13 +150,15 @@ map.on('load', function () {
         }
     });
 
-    map.on('click', 'adny-pedestrain-estimation', function(e){
-        let number = Math.round(e.features[0].properties["Median Count"]);
-    
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML("Estimated Pedestrian: " + number + " people pass through a day" )
-            .addTo(map);
+
+    map.on('mousemove', 'adny-pedestrain-estimation', function(e) {
+        if (e.features.length > 0) {
+            let number = Math.round(e.features[0].properties["Median Count"]);
+            document.getElementById('pedestrian-count').textContent = number;
+        } else {
+            // If no features are found under the cursor, reset the content
+            document.getElementById('pedestrian-count').textContent = '-';
+        }
     });
 
     //NYC DATA ON PARKS
@@ -176,7 +178,7 @@ map.on('load', function () {
         'layout': {
           // Make the layer visible by default.
           'visibility': 'none'
-          }
+        }
     });
 
     map.on('click', 'nyc-parks-polygons', function(e){
@@ -456,6 +458,28 @@ map.on('load', function () {
         }
     });
 
+    //ADNY EXTEROS LOCATIONS
+    map.addSource('exteros-points', {
+        type: 'geojson',
+        data: 'data/exteros.geojson'
+    });
+
+    map.addLayer({
+        'id': 'exteros-locations',
+        'type': 'circle',
+        'source': 'exteros-points',
+        'paint': {
+            'circle-color': '#DFFF00', // Adjust color as needed
+            'circle-radius': 4,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#000"
+        },
+        'layout': {
+          // Make the layer visible by default.
+          'visibility': 'none'
+        }
+    });
+
     // // Query the mask layer to get its geometry
     // map.querySourceFeatures('adny_mask', { sourceLayer: 'adny_mask' }, function (features) {
     //     console.log(features)
@@ -493,8 +517,8 @@ map.on('load', function () {
 
 });
 
-//FUNCTIONS
 
+//FUNCTIONS
 // Function to transform layer ID
 function transformLayerId(id) {
     // Replace hyphens with spaces
@@ -520,7 +544,7 @@ map.on('click', function (e) {
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {
   // If these two layers were not added to the map, abort 
-  if (!map.getLayer('adny-pedestrain-estimation') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')) {
+  if (!map.getLayer('adny-pedestrain-estimation') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')|| !map.getLayer('exteros-locations')) {
   return;
   }
    
@@ -533,7 +557,8 @@ map.on('idle', () => {
         "nyc-openstreet-lines",
         "nyc-train-lines",
         "nyc-landmarks",
-        "nyc-active-sheds"
+        "nyc-active-sheds",
+        "exteros-locations"
     ];
    
   // Set up the corresponding toggle button for each layer.
@@ -545,14 +570,12 @@ map.on('idle', () => {
     
     // Create a link.
     const link = document.createElement('a');
-    const button = document.createElement('div');
-    button.className = 'button'
+    link.className = 'button'
     link.id = id;
     link.href = '#';
     link.textContent = transformLayerId(id);
-    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')){
+    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
         link.className = 'active';
-        button.className = 'activeButton'
     };
 
 
@@ -571,11 +594,11 @@ map.on('idle', () => {
         // Toggle layer visibility by changing the layout object's visibility property.
         if (visibility === 'visible') {
             map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-            this.className = '';
-            this.parentElement.className = 'button';
+            this.className = 'button';
+            // this.parentElement.className = 'button';
         } else {
             this.className = 'active';
-            this.parentElement.className = 'activeButton';
+            // this.parentElement.className = 'activeButton';
             map.setLayoutProperty(
                 clickedLayer,
                 'visibility',
@@ -585,8 +608,7 @@ map.on('idle', () => {
     };  
     
     const menus = document.getElementById('menu');
-    button.appendChild(link)
-    menus.appendChild(button);
-
+    // button.appendChild(link)
+    menus.appendChild(link);
     }
 });
