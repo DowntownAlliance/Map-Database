@@ -65,7 +65,6 @@ body {
 }
 
 
-
 .button {
     background-color: gainsboro;
 }
@@ -74,8 +73,8 @@ body {
     background-color: rgba(127, 197, 6, 0.7); 
 }
 
-.button a, 
-.active a{
+.button , 
+.active {
     text-decoration: none;
     color: inherit;
     text-align: center;
