@@ -26,6 +26,55 @@
         <div class="navButton" id="data"><h2>GIT</h2></div>
     </div>
 </div>
+<div id="legend" class="legend-container">
+    <div style="height: 25px;"><b>ADNY Data</b></div>
+    <div class="legend-item" id="adny-public-spaces-icon">
+        <span class="legend-icon" style="background-color: #D2042D; border-radius: 50%;"></span>
+        <span class="legend-label">Public Spaces</span>
+    </div>
+    <div class="legend-item off" id="exteros-locations-icon">
+        <span class="legend-icon" style="background-color: #DFFF00; 
+            border-radius: 50%; 
+            width: 7px;
+            height: 7px;
+            margin: 0 14.5px;
+        "></span>
+        <span class="legend-label">Exteros Locations</span>
+    </div>
+    <div class="legend-item" id="adny-pedestrian-estimation-icon" style="flex-direction: column; align-items: baseline; gap:3px;">
+        <span class="legend-icon" 
+            style="background: linear-gradient(to right, rgba(173, 216, 230, 0.578), rgba(178, 34, 34, 0.561)); 
+            border:0.4px solid black;
+            width: 80%;"></span>
+        <span class="legend-label" style="padding-left: 5px;">Pedestrian Estimate</span>
+    </div>
+    
+    <div style="height: 25px;"><b>NYC Open Data</b></div>
+    <div class="legend-item off" id="nyc-pops-points-icon">
+        <span class="legend-icon" style="background-color: #0000FF; border-radius: 50%;"></span>
+        <span class="legend-label">POPS Points</span>
+    </div>
+    <div class="legend-item off" id="nyc-active-sheds-icon">
+        <span class="legend-icon" style="background-color: #FFBF00; border-radius: 50%;"></span>
+        <span class="legend-label">Active Sheds</span>
+    </div>
+    <div class="legend-item off" id="nyc-parks-polygons-icon">
+        <span class="legend-icon" style="background-color: #93c572f2; border: none;"></span>
+        <span class="legend-label">Parks Polygons</span>
+    </div>
+    <div class="legend-item off" id="nyc-landmarks-icon">
+        <span class="legend-icon" style="background-color: #0000ff36; border: none;"></span>
+        <span class="legend-label">Landmarks</span>
+    </div>
+    <div class="legend-item" id="nyc-openstreet-lines-icon">
+        <span class="legend-icon" style="background-color: #aaff00dc; border: none; height: 5px;"></span>
+        <span class="legend-label">Openstreet Lines</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-icon" style="background-color: red; border: none; height: 2px;"></span>
+        <span class="legend-label">ADNY Boundary</span>
+    </div>
+</div>
 <div id="map"></div>
 <div id="estimation-info">
     ESTIMATED PEDESTRIAN COUNT <br/> <span id="pedestrian-count">-</span> <b>people pass through a day</b>

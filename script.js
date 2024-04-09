@@ -129,14 +129,14 @@ fetchCSVAndConvertToGeoJSON(csvUrl);
 
 map.on('load', function () {
 
-    //ADNY Pedestrain Estimation BigBelly
+    //ADNY Pedestrian Estimation BigBelly
     map.addSource('adny-ped', {
         type: 'geojson',
         data: 'data/pedestrian_estimate.geojson'
     });
 
     map.addLayer({
-        'id': 'adny-pedestrain-estimation',
+        'id': 'adny-pedestrian-estimation',
         'type': 'fill',
         'source': 'adny-ped',
         'paint': {
@@ -152,7 +152,7 @@ map.on('load', function () {
     });
 
 
-    map.on('mousemove', 'adny-pedestrain-estimation', function(e) {
+    map.on('mousemove', 'adny-pedestrian-estimation', function(e) {
         if (e.features.length > 0) {
             let number = Math.round(e.features[0].properties["Median Count"]);
             let formattedNumber = number.toLocaleString();
@@ -293,15 +293,15 @@ map.on('load', function () {
     });
 
     //NYC DATA ON POPS
-    map.addSource('nyc-pop', {
+    map.addSource('nyc-pops', {
         type: 'geojson',
         data: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
     });
 
     map.addLayer({
-        'id': 'nyc-pop-points',
+        'id': 'nyc-pops-points',
         'type': 'circle',
-        'source': 'nyc-pop',
+        'source': 'nyc-pops',
         'paint': {
             'circle-color': '#0000FF', // Adjust color as needed
             'circle-radius': 6,
@@ -318,7 +318,7 @@ map.on('load', function () {
           }
     });
 
-    map.on('click', 'nyc-pop-points', function(e){
+    map.on('click', 'nyc-pops-points', function(e){
         let name = e.features[0].properties["building_address_with_zip"];
         let detail = e.features[0].properties["building_location"];
         let size = e.features[0].properties["size_required"];
@@ -494,7 +494,7 @@ map.on('load', function () {
 
     //         // Filter pop points layer
     //         var popFilter = ['intersects', ['geometry'], maskGeometry];
-    //         map.setFilter('nyc-pop-points', popFilter);
+    //         map.setFilter('nyc-pops-points', popFilter);
 
     //         // Filter parks layer
     //         var parksFilter = ['intersects', ['geometry'], maskGeometry];
@@ -543,18 +543,47 @@ map.on('click', function (e) {
     console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat+ ', Zoom: ' + zoom);
 });
 
+
+
+// Function to update the legend based on visible layers
+function updateLegend() {
+    const legendContainer = document.getElementById('legend');
+    legendContainer.innerHTML = '<h3>Legend</h3>'; // Reset legend content
+
+    // Get a list of visible layers
+    const visibleLayers = map.getStyle().layers.filter(layer => {
+        return (
+            map.getLayoutProperty(layer.id, 'visibility') === 'visible' &&
+            layer.id !== 'background' // Exclude the background layer from legend
+        );
+    });
+
+    // Generate legend items for each visible layer
+    visibleLayers.forEach(layer => {
+        const layerId = layer.id;
+        const layerName = transformLayerId(layerId); // Transform layer ID for display
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = `
+            <span class="legend-icon" style="background-color: ${getLayerColor(layerId)};"></span>
+            <span class="legend-label">${layerName}</span>
+        `;
+        legendContainer.appendChild(legendItem);
+    });
+}
+
 // After the last frame rendered before the map enters an "idle" state.
 map.on('idle', () => {
   // If these two layers were not added to the map, abort 
-  if (!map.getLayer('adny-pedestrain-estimation') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pop-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')|| !map.getLayer('exteros-locations')) {
+  if (!map.getLayer('adny-pedestrian-estimation') || !map.getLayer('nyc-parks-polygons')|| !map.getLayer('nyc-train-lines')|| !map.getLayer('nyc-pops-points')|| !map.getLayer('adny-public-spaces')|| !map.getLayer('nyc-openstreet-lines')|| !map.getLayer('exteros-locations')) {
   return;
   }
    
   // Enumerate ids of the layers.
   const toggleableLayerIds = [
         "adny-public-spaces",
-        "adny-pedestrain-estimation",
-        "nyc-pop-points",
+        "adny-pedestrian-estimation",
+        "nyc-pops-points",
         "nyc-parks-polygons",
         "nyc-openstreet-lines",
         "nyc-train-lines",
@@ -576,7 +605,7 @@ map.on('idle', () => {
     link.id = id;
     link.href = '#';
     link.textContent = transformLayerId(id);
-    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pop-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
+    if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
         link.className = 'activeToggle';
     };
 
@@ -585,6 +614,7 @@ map.on('idle', () => {
     // Show or hide layer when the toggle is clicked.
     link.onclick = function (e) {
         const clickedLayer = this.id;
+        const clickedLayerLegend = this.id + "-icon"
         e.preventDefault();
         e.stopPropagation();
         
@@ -597,9 +627,14 @@ map.on('idle', () => {
         if (visibility === 'visible') {
             map.setLayoutProperty(clickedLayer, 'visibility', 'none');
             this.className = 'toggle';
+            const legend = document.getElementById(clickedLayerLegend)
+            if (legend) {legend.classList.add("off")}
             // this.parentElement.className = 'toggle';
         } else {
             this.className = 'activeToggle';
+            const legend = document.getElementById(clickedLayerLegend)
+
+            if (legend) {legend.classList.remove("off")}
             // this.parentElement.className = 'activeButton';
             map.setLayoutProperty(
                 clickedLayer,
@@ -613,7 +648,9 @@ map.on('idle', () => {
     // toggle.appendChild(link)
     menus.appendChild(link);
     }
+    // updateLegend()
 });
+
 
 // Add the control to the map.
 map.addControl(
