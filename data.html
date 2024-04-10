@@ -22,13 +22,143 @@
     </div>
     <div class="navButtons">
         <a href="index.html"><div class="navButton" id="maptab"><h2>MAP</h2></div></a>
-        <div class="navButton" id="github"><h2>GITHUB</h2></div>
+        <a href="https://github.com/zoelin1122/Map-Database" target="_blank" rel="noopener noreferrer"><div class="navButton" id="github"><h2>GITHUB</h2></div></a>
     </div>
 </div>
 <div class="content">
-    hi
+    <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Dataset Name</th>
+              <th>Description</th>
+              <th>Publisher</th>
+              <th>Format</th>
+              <th>Status on MapDatabase</th>
+              <th>Update Frequency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="head"><a href="https://docs.google.com/spreadsheets/d/1nz0-crxwlc4iWhod5h9m_Av_7Eu4OhCLs-KZ5okArDQ/edit#gid=766505186" target="_blank" rel="noopener noreferrer">Public Space Database</a></td>
+              <td>ADNY Identified Public Space, produced by the Placemaking team. The site directly pulls from the Google Sheets.</td>
+              <td>ADNY</td>
+              <td>Google Sheets</td>
+              <td>Live from Google Sheets</td>
+              <td><span>Updated manually</span><br><br>Last Updated 2023</td>
+            </tr>
+            <tr>
+              <td class="head"><a href="https://data.cityofnewyork.us/City-Government/Privately-Owned-Public-Spaces-POPS-/rvih-nhyn/about_data" target="_blank" rel="noopener noreferrer">Privately Owned Public Spaces (POPS)</a></td>
+              <td>Privately Owned Public Space (POPS) are outdoor and indoor spaces provided for public enjoyment by private owners in exchange for bonus floor area or waivers. This dataset is owned and maintained by the New York City Department of City Planning and created in collaboration with Jerold S. Kayden and The Municipal Art Society of New York.</td>
+              <td>DCP</td>
+              <td>GeoSpatial (points)</td>
+              <td>Live from NYC Open Data</td>
+              <td>Updated annually</td>
+            </tr>
+            <tr>
+              <td class="head"><a href="https://data.cityofnewyork.us/Recreation/Parks-Properties/enfh-gkve/about_data" target="_blank" rel="noopener noreferrer">
+                Park Property
+              </a></td>
+              <td>
+                This dataset identifies property managed partially or solely by NYC Parks. This data has been produced in whole or part using secondary data. Data accuracy is limited by the scale and accuracy of the original sources. Site-specific conditions should be field-verified. Records are added as more land is designated under NYC Parks’ jurisdiction. Each record represents an acquisition.
+              </td>
+              <td>
+                DPR
+              </td>
+              <td>GeoSpatial (polygons)</td>
+              <td>Live from NYC Open Data</td>
+              <td>Updated monthly</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://data.cityofnewyork.us/Health/Open-Streets-Locations/uiay-nctu/about_data" target="_blank" rel="noopener noreferrer">
+                    OpenStreets Locations
+                </a></td>
+                <td>
+                  This dataset identifies property managed partially or solely by NYC Parks. This data has been produced in whole or part using secondary data. Data accuracy is limited by the scale and accuracy of the original sources. Site-specific conditions should be field-verified. Records are added as more land is designated under NYC Parks’ jurisdiction. Each record represents an acquisition.
+                </td>
+                <td>
+                  DOT
+                </td>
+                <td>GeoSpatial (lines)</td>
+                <td>Live from NYC Open Data</td>
+                <td>Updated monthly</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://data.cityofnewyork.us/Housing-Development/Individual-Landmark-Sites/buis-pvji/about_data" target="_blank" rel="noopener noreferrer">
+                    Landmarks/sites 
+                </a></td>
+                <td>
+                    This dataset contains site boundaries for all designated individual landmarks as well as administrative information such as site boundary description and designation date.
+                </td>
+                <td>
+                  LPC
+                </td>
+                <td>GeoSpatial (polygons)</td>
+                <td>Live from NYC Open Data</td>
+                <td>Updated biannually</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://docs.google.com/presentation/d/1Hfe06uaTmnnrPuwLVNtIiFw7GUa5yeVe2OkuuTc98Js/edit?usp=sharing" target="_blank" rel="noopener noreferrer">
+                    Pedestrian Volume Estimation
+                </a></td>
+                <td>
+                    Pedestrian estimation were generated from Big Belly trash data and Exteros pedestrian counters by Zoe Lin, a 2024 Data Fellow. Note that this is a rough estimation made using a Poisson Regression Model, but its accuracy is limited. <a href="https://docs.google.com/presentation/d/1Hfe06uaTmnnrPuwLVNtIiFw7GUa5yeVe2OkuuTc98Js/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Full presentation on methodology can be found here.</a>
+                </td>
+                <td>
+                  ADNY
+                </td>
+                <td>GeoSpatial (polygons)</td>
+                <td><span>Manually loaded GeoJSON</span></td>
+                <td>Reflecting data collected from 2023-24; Updated April 2024</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://dashboard.exteros.com/dashboard" target="_blank" rel="noopener noreferrer">
+                    Pedestrian counter locations
+                </a></td>
+                <td>
+                    Pedestrian counters are set up by Exteros. Find out more on the Exteros Dashboard.
+                </td>
+                <td>
+                    Exteros
+                </td>
+                <td>GeoSpatial (points)</td>
+                <td><span>Manually loaded GeoJSON</span></td>
+                <td>Reflecting data collected from 2023-24; Updated April 2024</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://data.cityofnewyork.us/Transportation/Subway-Lines/3qz8-muuu" target="_blank" rel="noopener noreferrer">
+                    Transit Lines
+                </a></td>
+                <td>
+                    Data provided by the Metropolitan Transportation Authority. It is updated as needed.
+                </td>
+                <td>
+                    MTA
+                </td>
+                <td>GeoSpatial (lines)</td>
+                <td>Live from NYC Open Data</td>
+                <td>Automated</td>
+            </tr>
+            <tr>
+                <td class="head"><a href="https://www.nyc.gov/assets/buildings/html/sidewalk-shed-map.html" target="_blank" rel="noopener noreferrer">
+                    Active sidewalk shed/scaffolding 
+                </a></td>
+                <td>
+                    Active shed (colloquially refered to as scaffolding) permits are distilled from DOB's active permits by their dev team for their dashboard. The CSV used to populate their dashboard is autogenerated on their public github reposity, which has been pulled to populate our map. <a href="https://github.com/NYCDOB/ActiveShedPermits/tree/gh-pages/data" target="_blank" rel="noopener noreferrer">See their code source here.</a> 
+                </td>
+                <td>
+                    DOB
+                </td>
+                <td>CSV</td>
+                <td>Live from NYC Open Data</td>
+                <td>Automated</td>
+            </tr>
+
+          </tbody>
+        </table>
+    </div>
 </div>
-<!-- <script type="module" src="script.js"></script> -->
+<script type="module" src="script2.js"></script>
 
 </body>
 </html>

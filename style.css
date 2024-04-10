@@ -192,3 +192,40 @@ body {
     display: none;
 }
 
+.content {
+    position: absolute;
+    top:90px;
+    left:0;
+    padding: 5rem;
+}
+
+table {
+    border-collapse: collapse;
+    width: 80%;
+    margin: 20px 10%;
+}
+
+th {
+    font-weight: bold;
+    background-color: rgb(198, 5, 5);
+    color: white;
+}
+
+th, td {
+    text-align: left;
+    padding: 15px;
+    border: 1px solid black;
+}
+
+table a {
+    color: inherit;
+    text-decoration:none;
+}
+
+table span{
+    text-decoration: solid underline red 3px;
+}
+
+.head {
+    font-weight: bold;
+}
