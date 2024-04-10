@@ -10,7 +10,7 @@ var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/zoelin1122/clgk7vp2i013j01ppuk7qmu2e', // Replace with your preferred Mapbox style
     center: [-74.01178569208115, 40.70756158972661], // Centered at ADNY coordinates
-    zoom: 14.65,
+    zoom: 14.5,
     maxBounds: nycBounds
 });
 
