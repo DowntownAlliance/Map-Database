@@ -15,7 +15,7 @@ var map = new mapboxgl.Map({
 });
 
 
-async function fetchCSVAndConvertToGeoJSON(csvUrl) {
+async function fetchCSVAndConvertToGeoJSON(csvUrl, options) {
     const response = await fetch(csvUrl);
     const csvData = await response.text();
 
@@ -28,29 +28,27 @@ async function fetchCSVAndConvertToGeoJSON(csvUrl) {
                 type: 'Feature',
                 geometry: {
                     type: 'Point',
-                    coordinates: [parseFloat(row['Longitude Point']), parseFloat(row['Latitude Point'])]
+                    coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
                 },
-                properties: {
-                    // Populate properties as needed from CSV columns
-                    JobNumber: row['Job Number'],
-                    BoroughName: row['Borough Name'],
-                    CountPermits: parseInt(row['Count Permits']),
-                    FirstPermitDate: row['First Permit Date'],
-                    CurrentDate: new Date(row['Current Date']),
-                    Age: parseInt(row['Age']),
-                    PermitExpirationDate: new Date(row['Permit Expiration Date']),
-                    SidewalkShedLinearFeet: parseInt(row['Sidewalk Shed/Linear Feet']),
-                    ConstructionMaterial: row['Construction Material'],
-                    CurrentJobStatus: row['Current Job Status'],
-                    BINNumber: parseInt(row['BIN Number']),
-                    CommunityBoard: parseInt(row['Community Board']),
-                    ApplicantBusinessName: row['Applicant Business Name'],
-                    HouseNumber: row['House Number'],
-                    StreetName: row['Street Name'],
-                    Activity: row['activity'],
-                    Commercial: row['Commercial'] === '1' // Convert to boolean
-                }
+                properties: {}
             };
+
+            // Map CSV columns to GeoJSON properties
+            Object.keys(options.propertyMap).forEach((csvColumn) => {
+                const geojsonProperty = options.propertyMap[csvColumn];
+                let value = row[csvColumn];
+
+                // Perform type conversion if specified
+                if (typeof geojsonProperty.type === 'number') {
+                    value = parseFloat(value);
+                } else if (geojsonProperty.type === 'boolean') {
+                    value = value === '1'; // Convert to boolean
+                } else if (geojsonProperty.type === 'date') {
+                    value = new Date(value); // Convert to Date object
+                }
+
+                feature.properties[geojsonProperty.name] = value;
+            });
 
             geojsonFeatures.push(feature);
         });
@@ -60,30 +58,70 @@ async function fetchCSVAndConvertToGeoJSON(csvUrl) {
         features: geojsonFeatures
     };
 
-    // Function to add GeoJSON layer to the map
-    function addGeoJSONLayerToMap(geojson) {
-        map.addSource('active-sheds-data', {
+    // Add GeoJSON layer to the map
+    function addGeoJSONLayerToMap(geojson, layerOptions) {
+        map.addSource(layerOptions.sourceId, {
             type: 'geojson',
             data: geojson
         });
 
         map.addLayer({
-            id: 'nyc-active-sheds',
-            type: 'circle',
-            source: 'active-sheds-data',
-            paint: {
-                'circle-color': '#FFBF00', // Adjust color as needed
-                'circle-radius': 6,
-                "circle-stroke-width": 1,
-                "circle-stroke-color": "#000",
-            },
-            'layout': {
-                // Make the layer visible by default.
-                'visibility': 'none'
+            id: layerOptions.layerId,
+            type: layerOptions.layerType,
+            source: layerOptions.sourceId,
+            paint: layerOptions.paint,
+            layout: {
+                visibility: layerOptions.visibility // Hide layer by default
             }
         });
 
-        map.on('click', 'nyc-active-sheds', function(e){
+        if (layerOptions.onClick) {
+            map.on('click', layerOptions.layerId, layerOptions.onClick);
+        }
+    }
+
+    // Add GeoJSON layer to the map using provided options
+    addGeoJSONLayerToMap(geojson, options.layerOptions);
+}
+// Call the function to fetch CSV data and convert to GeoJSON
+const sheds = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
+const publicSpaces = 'https://docs.google.com/spreadsheets/d/1nz0-crxwlc4iWhod5h9m_Av_7Eu4OhCLs-KZ5okArDQ/gviz/tq?tqx=out:csv&sheet=public_space_pedestrian_estimate';
+
+// Define options for CSV to GeoJSON conversion
+const shedsConversion = {
+    longitudeField: 'Longitude Point',
+    latitudeField: 'Latitude Point',
+    propertyMap: {
+        'Job Number': { name: 'JobNumber', type: 'string' },
+        'Borough Name': { name: 'BoroughName', type: 'string' },
+        'Count Permits': { name: 'CountPermits', type: 'number' },
+        'First Permit Date': { name: 'FirstPermitDate', type: 'date' },
+        'Current Date': { name: 'CurrentDate', type: 'date' },
+        'Age': { name: 'Age', type: 'number' },
+        'Permit Expiration Date': { name: 'PermitExpirationDate', type: 'date' },
+        'Sidewalk Shed/Linear Feet': { name: 'SidewalkShedLinearFeet', type: 'number' },
+        'Construction Material': { name: 'ConstructionMaterial', type: 'string' },
+        'Current Job Status': { name: 'CurrentJobStatus', type: 'string' },
+        'BIN Number': { name: 'BINNumber', type: 'number' },
+        'Community Board': { name: 'CommunityBoard', type: 'number' },
+        'Applicant Business Name': { name: 'ApplicantBusinessName', type: 'string' },
+        'House Number': { name: 'HouseNumber', type: 'string' },
+        'Street Name': { name: 'StreetName', type: 'string' },
+        'activity': { name: 'Activity', type: 'string' },
+        'Commercial': { name: 'Commercial', type: 'boolean' }
+    },
+    layerOptions: {
+        sourceId: 'active-sheds-data',
+        layerId: 'nyc-active-sheds',
+        layerType: 'circle',
+        paint: {
+            'circle-color': '#FFBF00', // Adjust color as needed
+            'circle-radius': 6,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#000'
+        },
+        visibility: "none",
+        onClick: function(e){
             let name = e.features[0].properties["HouseNumber"];
             let name2 = e.features[0].properties["StreetName"];
             let detail = e.features[0].properties["SidewalkShedLinearFeet"];
@@ -116,16 +154,85 @@ async function fetchCSVAndConvertToGeoJSON(csvUrl) {
                 .setLngLat(e.lngLat)
                 .setHTML(popupContent)
                 .addTo(map);
-        });
+        }
     }
-
-
-    addGeoJSONLayerToMap(geojson);
-}
-
-// Call the function to fetch CSV data and convert to GeoJSON
-const csvUrl = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
-fetchCSVAndConvertToGeoJSON(csvUrl);
+};
+const publicConversion = {
+    //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
+    longitudeField: 'lng',
+    latitudeField: 'lat',
+    propertyMap: {
+        'Space Number (for Google Form)': { name: 'spaceNumber', type: 'number' },
+        'Name': { name: 'name', type: 'string' },
+        'Address': { name: 'address', type: 'string' },
+        'Agency Oversight': { name: 'agencyOversight', type: 'string' },
+        'Space Type': { name: 'spaceType', type: 'string' },
+        'Pavement Type': { name: 'pavementType', type: 'string' },
+        'Permanment amentities': { name: 'permanmentAmentities', type: 'string' },
+        'Accesiblity': { name: 'accesiblity', type: 'string' },
+        'Temporary amentities': { name: 'temporaryAmentities', type: 'string' },
+        'Square Footage for Plaza': { name: 'squareFootagePlaza', type: 'string' },
+        'Total Area (sf)': { name: 'totalArea', type: 'number' },
+        'Usable Area (sf)': { name: 'usableArea', type: 'number' },
+        'Site Plan LINK': { name: 'linkPlan', type: 'string' },
+        'Photos LINK': { name: 'linkPhotos', type: 'string' },
+        'Electricity on site': { name: 'electricityOnSite', type: 'string' },
+        '# of outlets + voltage': { name: 'outletsVoltage', type: 'string' },
+        'Lighting': { name: 'lighting', type: 'string' },
+        'Under Construction': { name: 'underConstruction', type: 'string' },
+        'ADNY Installation (Name, date)': { name: 'adnyInstallation', type: 'string' },
+        'Existing Public Art Name': { name: 'existingPublicArtName', type: 'string' },
+        'Artist': { name: 'artist', type: 'string' },
+        'Water Street Rezoning (Y/N)': { name: 'waterStreetRezoning', type: 'string' },
+        'Property Owner': { name: 'propertyOwner', type: 'string' },
+        'Building Manager Name': { name: 'buildingManagerName', type: 'string' }
+    },
+    layerOptions: {
+        sourceId: 'adny-ps-csv',
+        layerId: 'adny-public-spaces',
+        layerType: 'circle',
+        paint: {
+            'circle-color': '#D2042D', // Adjust color as needed
+            'circle-radius': 6,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#000'
+        },
+        visibility: "visible",
+        onClick: function(e) {
+            let name = e.features[0].properties["name"];
+            let detail = e.features[0].properties["address"];
+            let size = e.features[0].properties["usableArea"];
+            let hours = e.features[0].properties["agencyOversight"];
+            let linkPlan = e.features[0].properties["linkPlan"];
+            let linkPhotos = e.features[0].properties["linkPhotos"];
+            let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+            let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+        
+            // Construct the road view URL with the extracted latitude and longitude
+            let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+        
+            // Create the HTML content for the popup
+            let popupContent = `
+                ADNY Identified Public Space
+                <h1>${name}</h1>
+                <br>
+                ${detail}
+                <br>
+                ${size} sqf | ${hours}
+                <br>
+                <a href="${linkPlan}" target="_blank">See Site Plan</a> | <a href="${linkPhotos}" target="_blank">See Site Photos</a>
+                <br>
+                <a href="${roadViewUrl}" target="_blank">See Road View</a>
+            `;
+        
+            // Create a new popup and set its content
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(map);
+        }
+    }
+};
 
 map.on('load', function () {
 
@@ -244,55 +351,61 @@ map.on('load', function () {
     });
 
 
-    //ADNY Public Spaces Database
-    map.addSource('adny-ps', {
-        type: 'geojson',
-        data: 'data/public_space_pedestrian_estimate.geojson'
-    });
+    // //ADNY Public Spaces Database
+    fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
 
-    map.addLayer({
-        'id': 'adny-public-spaces',
-        'type': 'circle',
-        'source': 'adny-ps',
-        'paint': {
-            'circle-color': '#D2042D', // Adjust color as needed
-            'circle-radius': 6,
-            "circle-stroke-width": 1,
-            "circle-stroke-color": "#000",
-        }
-    });
+    //DOB SHED DATA
+    fetchCSVAndConvertToGeoJSON(sheds, shedsConversion);
 
-    map.on('click', 'adny-public-spaces', function(e){
-        let name = e.features[0].properties["Name"];
-        let detail = e.features[0].properties["Address"];
-        let size = e.features[0].properties["Usable Area (sf)"];
-        let hours = e.features[0].properties["Agency Oversight"];
-        let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
-        let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+    // map.addSource('adny-ps', {
+    //     type: 'geojson',
+    //     data: 'data/public_space_pedestrian_estimate.geojson'
+    // });
+
+    // map.addLayer({
+    //     'id': 'adny-public-spaces',
+    //     'type': 'circle',
+    //     'source': 'adny-ps',
+    //     'paint': {
+    //         'circle-color': '#D2042D', // Adjust color as needed
+    //         'circle-radius': 6,
+    //         "circle-stroke-width": 1,
+    //         "circle-stroke-color": "#000",
+    //     }
+    // });
+
+    // map.on('click', 'adny-public-spaces', function(e){
+    //     let name = e.features[0].properties["Name"];
+    //     let detail = e.features[0].properties["Address"];
+    //     let size = e.features[0].properties["Usable Area (sf)"];
+    //     let hours = e.features[0].properties["Agency Oversight"];
+    //     let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+    //     let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
     
-        // Construct the road view URL with the extracted latitude and longitude
-        let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+    //     // Construct the road view URL with the extracted latitude and longitude
+    //     let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
     
-        // Create the HTML content for the popup
-        let popupContent = `
-            ADNY Identified Public Space
-            <h1>${name}</h1>
-            <br>
-            ${detail}
-            <br>
-            ${size} sqf | ${hours}
-            <br>
-            <a href="${roadViewUrl}" target="_blank">See Road View</a>
-        `;
+    //     // Create the HTML content for the popup
+    //     let popupContent = `
+    //         ADNY Identified Public Space
+    //         <h1>${name}</h1>
+    //         <br>
+    //         ${detail}
+    //         <br>
+    //         ${size} sqf | ${hours}
+    //         <br>
+    //         <a href="${roadViewUrl}" target="_blank">See Road View</a>
+    //     `;
     
-        // Create a new popup and set its content
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(popupContent)
-            .addTo(map);
-    });
+    //     // Create a new popup and set its content
+    //     new mapboxgl.Popup()
+    //         .setLngLat(e.lngLat)
+    //         .setHTML(popupContent)
+    //         .addTo(map);
+    // });
 
     //NYC DATA ON POPS
+    
     map.addSource('nyc-pops', {
         type: 'geojson',
         data: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
@@ -429,7 +542,7 @@ map.on('load', function () {
         'source': 'adny_mask',
         'paint': {
             'fill-color':'#000000',
-            'fill-opacity': 0.3
+            'fill-opacity': 0.2
         }
     });
 

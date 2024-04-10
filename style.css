@@ -50,6 +50,11 @@ body{
     font-size: small;
 }
 
+.navButtons a {
+    color: inherit;
+    text-decoration:none;
+}
+
 .navButtons div:hover {
     background-color: black;
     color: white;
@@ -186,3 +191,4 @@ body {
 .off{
     display: none;
 }
+
