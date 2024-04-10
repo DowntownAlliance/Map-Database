@@ -234,6 +234,16 @@ const publicConversion = {
     }
 };
 
+// Function to attach or detach the mousemove event listener based on layer visibility
+function toggleMouseMoveListener(visible) {
+    let estimationInfoElement = document.getElementById('estimation-info');
+    if (visible) {
+        estimationInfoElement.style.display = 'flex';
+    } else {
+        estimationInfoElement.style.display = 'none';
+    }
+}
+
 map.on('load', function () {
 
     //ADNY Pedestrian Estimation BigBelly
@@ -269,6 +279,7 @@ map.on('load', function () {
             document.getElementById('pedestrian-count').textContent = '-';
         }
     });
+    
 
     //NYC DATA ON PARKS
     map.addSource('nyc-parks', {
@@ -742,7 +753,9 @@ map.on('idle', () => {
             this.className = 'toggle';
             const legend = document.getElementById(clickedLayerLegend)
             if (legend) {legend.classList.add("off")}
-            // this.parentElement.className = 'toggle';
+            if (clickedLayer == 'adny-pedestrian-estimation'){
+                toggleMouseMoveListener(false)
+            }
         } else {
             this.className = 'activeToggle';
             const legend = document.getElementById(clickedLayerLegend)
@@ -754,6 +767,9 @@ map.on('idle', () => {
                 'visibility',
                 'visible'
             );
+            if (clickedLayer == 'adny-pedestrian-estimation'){
+                toggleMouseMoveListener(true)
+            }
         }
     };  
     
