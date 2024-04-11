@@ -229,3 +229,21 @@ table span{
 .head {
     font-weight: bold;
 }
+/* 
+#toggleButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    position: absolute;
+    bottom: 10px;
+    right: calc(25vw + 10px);
+    z-index: 10;
+}
+
+#toggleButton:hover {
+    background-color: #0056b3;
+} */
