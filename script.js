@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // toggleButton.addEventListener('click', toggleMapStyle);
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZG93bnRvd25hbGxpYW5jZSIsImEiOiJjbHV2YXVpcHIwMWtuMmpwYjk0NGNxcnh3In0.rYzWfkrrO07yLStZqJss_A';
-    
+
     var nycBounds = [
         [-74.03008569208115, 40.68856158972661], // Southwest coordinates of NYC
         [-73.9908569208115, 40.72856158972661]  // Northeast coordinates of NYC
@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // style: style2,
         center: [-74.01178569208115, 40.70756158972661], // Centered at ADNY coordinates
         zoom: 14.5,
-        maxBounds: nycBounds
+        maxBounds: nycBounds,
+        preserveDrawingBuffer: true
     });
 
 
@@ -809,4 +810,56 @@ document.addEventListener('DOMContentLoaded', function() {
             proximity: "-74.01008569208115, 40.70756158972661"
         })
     );
+
+    // function downloadMapImage() {
+    //     var canvas = map.getCanvas();
+    //     var image = canvas.toDataURL('image/png');
+
+    //     // Create a temporary anchor element
+    //     var link = document.createElement('a');
+    //     link.href = image;
+    //     link.download = 'map_image.png';
+    //     document.body.appendChild(link);
+
+    //     // Trigger the download
+    //     link.click();
+
+    //     // Clean up
+    //     document.body.removeChild(link);
+    // }
+
+    // // Add click event listener to download button
+    // document.getElementById('downloadButton').addEventListener('click', function() {
+    //     downloadMapImage();
+    // });
+
+    // Function to download map image with HTML elements
+    function downloadMapImage() {
+        // Combine map and HTML elements into a single container for capture
+        var mapContainer = document.getElementById('mapContainer');
+
+        // Use html2canvas to capture the combined container
+        html2canvas(mapContainer).then(function(canvas) {
+            // Convert canvas to image URL
+            var imageURL = canvas.toDataURL('image/png');
+
+            // Create a temporary anchor element
+            var link = document.createElement('a');
+            link.href = imageURL;
+            link.download = 'map_image.png';
+            document.body.appendChild(link);
+
+            // Trigger the download
+            link.click();
+
+            // Clean up
+            document.body.removeChild(link);
+        });
+    }
+
+    // Add click event listener to download button
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        downloadMapImage();
+    });
+
 });
