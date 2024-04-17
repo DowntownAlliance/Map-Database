@@ -1,3 +1,16 @@
+const datasets = [
+    {
+        name: 'Public Wi-Fi Locations',
+        endpoint: 'https://data.cityofnewyork.us/resource/jd4g-ks2z.csv'
+    },
+    {
+        name: '311 Service Requests - Noise',
+        endpoint: 'https://data.cityofnewyork.us/resource/fhrw-4uyv.csv'
+    },
+    // Add more datasets as needed
+];
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // // Define the two map styles
     // const style1 = 'mapbox://styles/mapbox/satellite-v9';
@@ -862,4 +875,42 @@ document.addEventListener('DOMContentLoaded', function() {
         downloadMapImage();
     });
 
+    // Function to download CSV data from NYC Open Data endpoint
+    async function downloadCsvFromEndpoint(endpoint, filename) {
+        try {
+            const response = await fetch(endpoint);
+            const data = await response.text();
+
+            // Parse CSV data using PapaParse library
+            const parsedCsv = Papa.parse(data, { header: true });
+
+            // Convert parsed data back to CSV format
+            const csvContent = Papa.unparse(parsedCsv);
+
+            // Create a temporary anchor element to trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error('Failed to download CSV:', error);
+        }
+    }
+
+    // Function to handle click event on dataDownloadButton
+    document.getElementById('dataDownloadButton').addEventListener('click', async () => {
+        // Iterate over each dataset and initiate CSV download
+        for (const dataset of datasets) {
+            const { name, endpoint } = dataset;
+            const filename = `${name}.csv`;
+
+            // Download CSV from NYC Open Data endpoint
+            await downloadCsvFromEndpoint(endpoint, filename);
+        }
+    });
 });
