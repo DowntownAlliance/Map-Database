@@ -1,13 +1,24 @@
 const datasets = [
     {
-        name: 'Public Wi-Fi Locations',
-        endpoint: 'https://data.cityofnewyork.us/resource/jd4g-ks2z.csv'
+        name: 'DOB_Active Shed Permits',
+        endpoint: 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv'
     },
     {
-        name: '311 Service Requests - Noise',
-        endpoint: 'https://data.cityofnewyork.us/resource/fhrw-4uyv.csv'
+        name: 'NYC Parks',
+        endpoint: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000'
     },
-    // Add more datasets as needed
+    {
+        name: 'NYC POPS',
+        endpoint: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
+    },
+    {
+        name: 'NYC Landmarks',
+        endpoint: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
+    },
+    {
+        name: 'NYC OpenStreet',
+        endpoint: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000'
+    },
 ];
 
 
@@ -454,7 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
         });
-
         map.addLayer({
             'id': 'nyc-pops-points',
             'type': 'circle',
@@ -511,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
         });
-
+        
         map.addLayer({
             'id': 'nyc-landmarks',
             'type': 'fill',
@@ -605,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000'
         });
-
+        
         map.addLayer({
             'id': 'nyc-openstreet-lines',
             'type': 'line',
