@@ -1,24 +1,29 @@
 const datasets = [
     {
-        name: 'DOB_Active Shed Permits',
-        endpoint: 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv'
-    },
-    {
-        name: 'NYC Parks',
-        endpoint: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000'
-    },
-    {
         name: 'NYC POPS',
-        endpoint: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
+        endpoint: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000&$where=zip_code%20in%20(%2710007%27,%20%2710038%27,%20%2710004%27,%20%2710006%27,%20%2710005%27)',
+        fileType: 'geojson'
     },
     {
         name: 'NYC Landmarks',
-        endpoint: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
+        endpoint: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000&$where=block%20>%20130%20AND%20borough=%27MN%27',
+        fileType: 'geojson'
+    },
+    {
+        name: 'NYC Parks',
+        endpoint: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000&councildistrict=1',
+        fileType: 'geojson'
     },
     {
         name: 'NYC OpenStreet',
-        endpoint: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000'
+        endpoint: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000',
+        fileType: 'geojson'
     },
+    {
+        name: 'DOB_Active Shed Permits',
+        endpoint: 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv',
+        fileType: 'csv'
+    },  
 ];
 
 
@@ -67,40 +72,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
         $.csv.toObjects(csvData, { headers: true })
             .forEach((row) => {
-                // Convert each row into a GeoJSON feature
-                const feature = {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
-                    },
-                    properties: {}
-                };
-
-                // Map CSV columns to GeoJSON properties
-                Object.keys(options.propertyMap).forEach((csvColumn) => {
-                    const geojsonProperty = options.propertyMap[csvColumn];
-                    let value = row[csvColumn];
-
-                    // Perform type conversion if specified
-                    if (typeof geojsonProperty.type === 'number') {
-                        value = parseFloat(value);
-                    } else if (geojsonProperty.type === 'boolean') {
-                        value = value === '1'; // Convert to boolean
-                    } else if (geojsonProperty.type === 'date') {
-                        value = new Date(value); // Convert to Date object
+                console.log(row)
+                if ('Borough Digit' in row && 'Block' in row) {
+                    const boroughDigit = parseInt(row['Borough Digit']);
+                    const block = parseInt(row['Block']);
+        
+                    // Filter rows based on conditions (if columns exist)
+                    if (boroughDigit === 1 && block <= 130) {
+                        // Convert each row into a GeoJSON feature
+                        const feature = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
+                            },
+                            properties: {}
+                        }; // Map CSV columns to GeoJSON properties
+                        Object.keys(options.propertyMap).forEach((csvColumn) => {
+                            const geojsonProperty = options.propertyMap[csvColumn];
+                            let value = row[csvColumn];
+    
+                            // Perform type conversion if specified
+                            if (typeof geojsonProperty.type === 'number') {
+                                value = parseFloat(value);
+                            } else if (geojsonProperty.type === 'boolean') {
+                                value = value === '1'; // Convert to boolean
+                            } else if (geojsonProperty.type === 'date') {
+                                value = new Date(value); // Convert to Date object
+                            }
+    
+                            feature.properties[geojsonProperty.name] = value;
+                        });
+    
+                        geojsonFeatures.push(feature);
                     }
 
-                    feature.properties[geojsonProperty.name] = value;
-                });
+                } else {
+                    // Convert each row into a GeoJSON feature
+                    const feature = {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
+                        },
+                        properties: {}
+                    };
 
-                geojsonFeatures.push(feature);
+                    // Map CSV columns to GeoJSON properties
+                    Object.keys(options.propertyMap).forEach((csvColumn) => {
+                        const geojsonProperty = options.propertyMap[csvColumn];
+                        let value = row[csvColumn];
+
+                        // Perform type conversion if specified
+                        if (typeof geojsonProperty.type === 'number') {
+                            value = parseFloat(value);
+                        } else if (geojsonProperty.type === 'boolean') {
+                            value = value === '1'; // Convert to boolean
+                        } else if (geojsonProperty.type === 'date') {
+                            value = new Date(value); // Convert to Date object
+                        }
+
+                        feature.properties[geojsonProperty.name] = value;
+                    });
+
+                    geojsonFeatures.push(feature);
+                }     
             });
 
         const geojson = {
             type: 'FeatureCollection',
             features: geojsonFeatures
         };
+        
+        //  Save GeoJSON data as a downloadable file
+        const geojsonBlob = new Blob([JSON.stringify(geojson)], { type: 'application/json' });
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(geojsonBlob);
+        downloadLink.download = options.filename || 'data.geojson'; // Use provided filename or default name
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+
+
+        // Clean up: remove the download link element
+        document.body.removeChild(downloadLink);
+
 
         // Add GeoJSON layer to the map
         function addGeoJSONLayerToMap(geojson, layerOptions) {
@@ -126,7 +181,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add GeoJSON layer to the map using provided options
         addGeoJSONLayerToMap(geojson, options.layerOptions);
+        return geojson; // Return the GeoJSON data if needed
+
     }
+
     // Call the function to fetch CSV data and convert to GeoJSON
     const sheds = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
     const publicSpaces = 'https://docs.google.com/spreadsheets/d/1nz0-crxwlc4iWhod5h9m_Av_7Eu4OhCLs-KZ5okArDQ/gviz/tq?tqx=out:csv&sheet=public_space_pedestrian_estimate';
@@ -146,8 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'Sidewalk Shed/Linear Feet': { name: 'SidewalkShedLinearFeet', type: 'number' },
             'Construction Material': { name: 'ConstructionMaterial', type: 'string' },
             'Current Job Status': { name: 'CurrentJobStatus', type: 'string' },
-            'BIN Number': { name: 'BINNumber', type: 'number' },
-            'Community Board': { name: 'CommunityBoard', type: 'number' },
+            'Borough Digit': { name: 'BoroughDigit', type: 'number' },
+            'Block': { name: 'Block', type: 'number' },
             'Applicant Business Name': { name: 'ApplicantBusinessName', type: 'string' },
             'House Number': { name: 'HouseNumber', type: 'string' },
             'Street Name': { name: 'StreetName', type: 'string' },
@@ -328,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //NYC DATA ON PARKS
         map.addSource('nyc-parks', {
             type: 'geojson',
-            data: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000'
+            data: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000&councildistrict=1'
         });
 
         map.addLayer({
@@ -519,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //https://data.cityofnewyork.us/resource/buis-pvji.geojson
         map.addSource('nyc-od-landmarks', {
             type: 'geojson',
-            data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
+            data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000&$where=block%20<=%20130%20AND%20borough=%27MN%27'
         });
         
         map.addLayer({
@@ -913,14 +971,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to handle click event on dataDownloadButton
-    document.getElementById('dataDownloadButton').addEventListener('click', async () => {
-        // Iterate over each dataset and initiate CSV download
-        for (const dataset of datasets) {
-            const { name, endpoint } = dataset;
-            const filename = `${name}.csv`;
+    // document.getElementById('dataDownloadButton').addEventListener('click', async () => {
+    //     const today = new Date().toISOString().split('T')[0];
 
-            // Download CSV from NYC Open Data endpoint
-            await downloadCsvFromEndpoint(endpoint, filename);
+    //     // Iterate over each dataset and initiate CSV download
+    //     for (const dataset of datasets) {
+    //         const { name, endpoint } = dataset;
+    //         const filename = `${name}-${today}.geojson`;
+
+    //         // Download CSV from NYC Open Data endpoint
+    //         await downloadCsvFromEndpoint(endpoint, filename);
+    //     }
+    // });
+    document.getElementById('dataDownloadButton').addEventListener('click', async () => {
+        const today = new Date().toISOString().split('T')[0];
+
+        // Iterate over each dataset and initiate file download
+        for (const dataset of datasets) {
+            const { name, endpoint, fileType } = dataset;
+    
+            if (fileType === 'geojson') {
+                // Download CSV from endpoint
+                const filename = `${name}-${today}.geojson`;
+                await downloadCsvFromEndpoint(endpoint, filename);
+            } else if (fileType === 'csv') {
+                // Convert CSV to GeoJSON and save the file
+                const filename = `${name}-${today}.geojson`;
+                await fetchCSVAndConvertToGeoJSON(endpoint, { ...shedsConversion, filename });
+            }
         }
+    
+        // All files have been downloaded or generated
+        console.log('All files downloaded or generated successfully.');
     });
+    
+    // // Function to fetch CSV data from endpoint and initiate download
+    // async function downloadCsvFromEndpoint(endpoint, filename) {
+    //     const response = await fetch(endpoint);
+    //     const csvData = await response.text();
+    //     const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+
+    //     // Create download link for CSV file
+    //     const downloadLink = document.createElement('a');
+    //     downloadLink.href = URL.createObjectURL(csvBlob);
+    //     downloadLink.download = filename;
+    //     downloadLink.style.display = 'none';
+    //     document.body.appendChild(downloadLink);
+
+    //     // Trigger download when link is clicked
+    //     downloadLink.click();
+
+    //     // Clean up: remove the download link element
+    //     document.body.removeChild(downloadLink);
+    // }
+
 });
