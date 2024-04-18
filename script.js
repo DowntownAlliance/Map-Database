@@ -143,19 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'FeatureCollection',
             features: geojsonFeatures
         };
-        
-        //  Save GeoJSON data as a downloadable file
-        const geojsonBlob = new Blob([JSON.stringify(geojson)], { type: 'application/json' });
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(geojsonBlob);
-        downloadLink.download = options.filename || 'data.geojson'; // Use provided filename or default name
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-
-
-        // Clean up: remove the download link element
-        document.body.removeChild(downloadLink);
-
 
         // Add GeoJSON layer to the map
         function addGeoJSONLayerToMap(geojson, layerOptions) {
@@ -943,46 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
         downloadMapImage();
     });
 
-    // Function to download CSV data from NYC Open Data endpoint
-    async function downloadCsvFromEndpoint(endpoint, filename) {
-        try {
-            const response = await fetch(endpoint);
-            const data = await response.text();
 
-            // Parse CSV data using PapaParse library
-            const parsedCsv = Papa.parse(data, { header: true });
-
-            // Convert parsed data back to CSV format
-            const csvContent = Papa.unparse(parsedCsv);
-
-            // Create a temporary anchor element to trigger download
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-        } catch (error) {
-            console.error('Failed to download CSV:', error);
-        }
-    }
-
-    // Function to handle click event on dataDownloadButton
-    // document.getElementById('dataDownloadButton').addEventListener('click', async () => {
-    //     const today = new Date().toISOString().split('T')[0];
-
-    //     // Iterate over each dataset and initiate CSV download
-    //     for (const dataset of datasets) {
-    //         const { name, endpoint } = dataset;
-    //         const filename = `${name}-${today}.geojson`;
-
-    //         // Download CSV from NYC Open Data endpoint
-    //         await downloadCsvFromEndpoint(endpoint, filename);
-    //     }
-    // });
     document.getElementById('dataDownloadButton').addEventListener('click', async () => {
         const today = new Date().toISOString().split('T')[0];
 
@@ -996,8 +944,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 await downloadCsvFromEndpoint(endpoint, filename);
             } else if (fileType === 'csv') {
                 // Convert CSV to GeoJSON and save the file
-                const filename = `${name}-${today}.geojson`;
-                await fetchCSVAndConvertToGeoJSON(endpoint, { ...shedsConversion, filename });
+                const filename = `${name}-${today}.csv`;
+                await downloadCsvFromEndpoint(endpoint, filename);
             }
         }
     
@@ -1005,24 +953,23 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('All files downloaded or generated successfully.');
     });
     
-    // // Function to fetch CSV data from endpoint and initiate download
-    // async function downloadCsvFromEndpoint(endpoint, filename) {
-    //     const response = await fetch(endpoint);
-    //     const csvData = await response.text();
-    //     const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    // Function to fetch CSV data from endpoint and initiate download
+    async function downloadCsvFromEndpoint(endpoint, filename) {
+        const response = await fetch(endpoint);
+        const csvData = await response.text();
+        const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
 
-    //     // Create download link for CSV file
-    //     const downloadLink = document.createElement('a');
-    //     downloadLink.href = URL.createObjectURL(csvBlob);
-    //     downloadLink.download = filename;
-    //     downloadLink.style.display = 'none';
-    //     document.body.appendChild(downloadLink);
+        // Create download link for CSV file
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(csvBlob);
+        downloadLink.download = filename;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
 
-    //     // Trigger download when link is clicked
-    //     downloadLink.click();
+        // Trigger download when link is clicked
+        downloadLink.click();
 
-    //     // Clean up: remove the download link element
-    //     document.body.removeChild(downloadLink);
-    // }
-
+        // Clean up: remove the download link element
+        document.body.removeChild(downloadLink);
+    }
 });
