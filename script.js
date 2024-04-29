@@ -175,6 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call the function to fetch CSV data and convert to GeoJSON
     const sheds = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
     const publicSpaces = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSg6HfyloZiH9VxTjBchen0mDYhtv3hvlqLNNLXzmO5DaVM8NJHN3_ODcBlJ4PawKltLSxodDDT0iwk/pub?gid=0&single=true&output=csv';
+    const events = 'data/placemaking_events.csv';
+    const art = 'data/public_art.csv';
 
     // Define options for CSV to GeoJSON conversion
     const shedsConversion = {
@@ -323,6 +325,120 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    const eventsConversion = {
+        //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
+        longitudeField: 'Building: Geolocation Fields (Longitude)',
+        latitudeField: 'Building: Geolocation Fields (Latitude)',
+        propertyMap: {
+            'Placemaking: Placemaking Program': { name: 'program', type: 'string' },
+            'Building: Building Street': { name: 'address', type: 'string' },
+            'Description': { name: 'description', type: 'string' },
+            'End date': { name: 'endDate', type: 'date' },
+            'Start date': { name: 'startDate', type: 'date' },
+            'Placemaking Event': { name: 'placemakingEvent', type: 'string' },
+            'Partner Organization': { name: 'partnerOrganization', type: 'string' }
+        },
+        layerOptions: {
+            sourceId: 'adny-events-csv',
+            layerId: 'adny-events',
+            layerType: 'circle',
+            paint: {
+                'circle-color': '#fc59a3', 
+                'circle-radius': 6,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#000'
+            },
+            visibility: "none",
+            onClick: function(e) {
+                let name = e.features[0].properties["placemakingEvent"];
+                let detail = e.features[0].properties["address"];
+                let size = e.features[0].properties["partnerOrganization"];
+
+                let startDate = new Date(e.features[0].properties["startDate"]);
+                let endDate = new Date(e.features[0].properties["endDate"]);
+                let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+                let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+                let startyear = startDate.getFullYear();
+                let startmonth = String(startDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+                let startday = String(startDate.getDate()).padStart(2, '0');
+                let endyear = endDate.getFullYear();
+                let endmonth = String(endDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+                let endday = String(endDate.getDate()).padStart(2, '0');
+                let formattedStartDate = `${startyear}-${startmonth}-${startday}`;
+                let formattedEndDate = `${endyear}-${endmonth}-${endday}`;
+            
+                // Construct the road view URL with the extracted latitude and longitude
+                let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+            
+                // Create the HTML content for the popup
+                let popupContent = `
+                    ADNY Placemaking Events
+                    <h1>${name}</h1>
+                    <h2>${size}</h2>
+                    ${detail}
+                    <br>
+                    from ${formattedStartDate} to ${formattedEndDate}
+                    <br>
+                    <a href="${roadViewUrl}" target="_blank">See Road View</a>
+                `;
+            
+                // Create a new popup and set its content
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            }
+        }
+    };
+
+    const artConversion = {
+        //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
+        longitudeField: 'Building: Geolocation Fields (Longitude)',
+        latitudeField: 'Building: Geolocation Fields (Latitude)',
+        propertyMap: {
+            'Account: Publication Name': { name: 'program', type: 'string' },
+            'Account: Billing Address': { name: 'address', type: 'string' },
+        },
+        layerOptions: {
+            sourceId: 'adny-art-csv',
+            layerId: 'adny-art',
+            layerType: 'circle',
+            paint: {
+                'circle-color': '#b433f9', 
+                'circle-radius': 6,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#000'
+            },
+            visibility: "none",
+            onClick: function(e) {
+                let name = e.features[0].properties["program"];
+                let detail = e.features[0].properties["address"];
+
+                let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+                let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+                
+                // Construct the road view URL with the extracted latitude and longitude
+                let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+            
+                // Create the HTML content for the popup
+                let popupContent = `
+                    ADNY Identified Public Art
+                    <h1>${name}</h1>
+                    <br>
+                    ${detail}
+                    <br>
+                    <a href="${roadViewUrl}" target="_blank">See Road View</a>
+                `;
+            
+                // Create a new popup and set its content
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            }
+        }
+    };
+
     // Function to attach or detach the mousemove event listener based on layer visibility
     function toggleMouseMoveListener(visible) {
         let estimationInfoElement = document.getElementById('estimation-info');
@@ -453,7 +569,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // //ADNY Public Spaces Database
         fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
-
+        // //ADNY event
+        fetchCSVAndConvertToGeoJSON(events, eventsConversion);
+        // //ADNY art
+        fetchCSVAndConvertToGeoJSON(art, artConversion);
         //DOB SHED DATA
         fetchCSVAndConvertToGeoJSON(sheds, shedsConversion);
 
@@ -801,7 +920,9 @@ document.addEventListener('DOMContentLoaded', function() {
             "nyc-train-lines",
             "nyc-landmarks",
             "nyc-active-sheds",
-            "exteros-locations"
+            "exteros-locations",
+            "adny-art",
+            "adny-events"
         ];
     
     // Set up the corresponding toggle button for each layer.
@@ -817,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.id = id;
         link.href = '#';
         link.textContent = transformLayerId(id);
-        if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
+        if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')&&(link.id !='adny-art')&&(link.id !='adny-events')){
             link.className = 'activeToggle';
         };
 
