@@ -14,7 +14,9 @@
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src='https://npmcdn.com/csv2geojson@latest/csv2geojson.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
 <div class="nav">
@@ -27,64 +29,76 @@
         <a href="https://github.com/DowntownAlliance/Map-Database" target="_blank" rel="noopener noreferrer"><div class="navButton" id="github"><h2>GITHUB</h2></div></a>
     </div>
 </div>
-<!-- <button id="toggleButton">Toggle Map Style</button> -->
-<div id="legend" class="legend-container">
-    <div style="height: 25px;"><b>ADNY Data</b></div>
-    <div class="legend-item" id="adny-public-spaces-icon">
-        <span class="legend-icon" style="background-color: #D2042D; border-radius: 50%;"></span>
-        <span class="legend-label">Public Spaces</span>
-    </div>
-    <div class="legend-item off" id="exteros-locations-icon">
-        <span class="legend-icon" style="background-color: #DFFF00; 
-            border-radius: 50%; 
-            width: 7px;
-            height: 7px;
-            margin: 0 14.5px;
-        "></span>
-        <span class="legend-label">Exteros Locations</span>
-    </div>
-    <div class="legend-item" id="adny-pedestrian-estimation-icon" style="flex-direction: column; align-items: baseline; gap:3px;">
-        <span class="legend-icon" 
-            style="background: linear-gradient(to right, rgba(173, 216, 230, 0.578), rgba(178, 34, 34, 0.561)); 
-            border:0.4px solid black;
-            width: 80%;"></span>
-        <span class="legend-label" style="padding-left: 5px;">Pedestrian Estimate</span>
-    </div>
-    
-    <div style="height: 25px;"><b>NYC Open Data</b></div>
-    <div class="legend-item off" id="nyc-pops-points-icon">
-        <span class="legend-icon" style="background-color: #0000FF; border-radius: 50%;"></span>
-        <span class="legend-label">POPS Points</span>
-    </div>
-    <div class="legend-item off" id="nyc-active-sheds-icon">
-        <span class="legend-icon" style="background-color: #FFBF00; border-radius: 50%;"></span>
-        <span class="legend-label">Active Sheds</span>
-    </div>
-    <div class="legend-item off" id="nyc-parks-polygons-icon">
-        <span class="legend-icon" style="background-color: #93c572f2; border: none;"></span>
-        <span class="legend-label">Parks Polygons</span>
-    </div>
-    <div class="legend-item off" id="nyc-landmarks-icon">
-        <span class="legend-icon" style="background-color: #0000ff36; border: none;"></span>
-        <span class="legend-label">Landmarks</span>
-    </div>
-    <div class="legend-item" id="nyc-openstreet-lines-icon">
-        <span class="legend-icon" style="background-color: #aaff00dc; border: none; height: 5px;"></span>
-        <span class="legend-label">Openstreet Lines</span>
-    </div>
-    <div class="legend-item">
-        <span class="legend-icon" style="background-color: red; border: none; height: 2px;"></span>
-        <span class="legend-label">ADNY Boundary</span>
-    </div>
-</div>
-<div id="map"></div>
-<div id="estimation-info">
-    ESTIMATED PEDESTRIAN COUNT <br/> <span id="pedestrian-count">-</span> people pass through a day
-</div>
 <div class="row">
-    <div class="column1"></div>
+    <div class="column1" id="mapContainer">
+        <div id="legend" class="legend-container">
+            <div style="height: 25px;"><b>ADNY Data</b></div>
+            <div class="legend-item" id="adny-public-spaces-icon">
+                <span class="legend-icon" style="background-color: #D2042D; border-radius: 50%;"></span>
+                <span class="legend-label">Public Spaces</span>
+            </div>
+            <div class="legend-item off" id="adny-art-icon">
+                <span class="legend-icon" style="background-color: #b433f9; border-radius: 50%;"></span>
+                <span class="legend-label">Public Art</span>
+            </div>
+            <div class="legend-item off" id="adny-events-icon">
+                <span class="legend-icon" style="background-color: #fc59a3; border-radius: 50%;"></span>
+                <span class="legend-label">Placemaking Events</span>
+            </div>
+            <div class="legend-item off" id="exteros-locations-icon">
+                <span class="legend-icon" style="background-color: #DFFF00; 
+                    border-radius: 50%; 
+                    width: 7px;
+                    height: 7px;
+                    margin: 0 14.5px;
+                "></span>
+                <span class="legend-label">Exteros Locations</span>
+            </div>
+            <div class="legend-item" id="adny-pedestrian-estimation-icon" style="flex-direction: column; align-items: baseline; gap:3px;">
+                <span class="legend-icon" 
+                    style="background: linear-gradient(to right, rgba(173, 216, 230, 0.578), rgba(178, 34, 34, 0.561)); 
+                    border:0.4px solid black;
+                    width: 80%;"></span>
+                <span class="legend-label" style="padding-left: 5px;">Pedestrian Estimate</span>
+            </div>
+            
+            <div style="height: 25px;"><b>NYC Open Data</b></div>
+            <div class="legend-item off" id="nyc-pops-points-icon">
+                <span class="legend-icon" style="background-color: #0000FF; border-radius: 50%;"></span>
+                <span class="legend-label">POPS Points</span>
+            </div>
+            <div class="legend-item off" id="nyc-active-sheds-icon">
+                <span class="legend-icon" style="background-color: #FFBF00; border-radius: 50%;"></span>
+                <span class="legend-label">Active Sheds</span>
+            </div>
+            <div class="legend-item off" id="nyc-parks-polygons-icon">
+                <span class="legend-icon" style="background-color: #93c572f2; border: none;"></span>
+                <span class="legend-label">Parks Polygons</span>
+            </div>
+            <div class="legend-item off" id="nyc-landmarks-icon">
+                <span class="legend-icon" style="background-color: #0000ff36; border: none;"></span>
+                <span class="legend-label">Landmarks</span>
+            </div>
+            <div class="legend-item" id="nyc-openstreet-lines-icon">
+                <span class="legend-icon" style="background-color: #aaff00dc; border: none; height: 5px;"></span>
+                <span class="legend-label">Openstreet Lines</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="background-color: red; border: none; height: 2px;"></span>
+                <span class="legend-label">ADNY Boundary</span>
+            </div>
+        </div>
+        <div id="map"></div>
+        <div id="estimation-info">
+            ESTIMATED PEDESTRIAN COUNT <br/> <span id="pedestrian-count">-</span> people pass through a day
+        </div>
+    </div>
     <div class="column2">
         <div id='menu'> 
+        </div>
+        <div id="exports">
+            <button id='downloadButton'>Download Map</button>
+            <button id='dataDownloadButton'>Download Data</button>
         </div>
     </div>
 </div>

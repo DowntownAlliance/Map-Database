@@ -1,3 +1,32 @@
+const datasets = [
+    {
+        name: 'NYC POPS',
+        endpoint: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000&$where=zip_code%20in%20(%2710007%27,%20%2710038%27,%20%2710004%27,%20%2710006%27,%20%2710005%27)',
+        fileType: 'geojson'
+    },
+    {
+        name: 'NYC Landmarks',
+        endpoint: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000&$where=block%20>%20130%20AND%20borough=%27MN%27',
+        fileType: 'geojson'
+    },
+    {
+        name: 'NYC Parks',
+        endpoint: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000&councildistrict=1',
+        fileType: 'geojson'
+    },
+    {
+        name: 'NYC OpenStreet',
+        endpoint: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000',
+        fileType: 'geojson'
+    },
+    {
+        name: 'DOB_Active Shed Permits',
+        endpoint: 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv',
+        fileType: 'csv'
+    },  
+];
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // // Define the two map styles
     // const style1 = 'mapbox://styles/mapbox/satellite-v9';
@@ -18,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // toggleButton.addEventListener('click', toggleMapStyle);
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZG93bnRvd25hbGxpYW5jZSIsImEiOiJjbHV2YXVpcHIwMWtuMmpwYjk0NGNxcnh3In0.rYzWfkrrO07yLStZqJss_A';
-    
+
     var nycBounds = [
         [-74.03008569208115, 40.68856158972661], // Southwest coordinates of NYC
         [-73.9908569208115, 40.72856158972661]  // Northeast coordinates of NYC
@@ -30,7 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // style: style2,
         center: [-74.01178569208115, 40.70756158972661], // Centered at ADNY coordinates
         zoom: 14.5,
-        maxBounds: nycBounds
+        maxBounds: nycBounds,
+        preserveDrawingBuffer: true
     });
 
 
@@ -42,34 +72,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
         $.csv.toObjects(csvData, { headers: true })
             .forEach((row) => {
-                // Convert each row into a GeoJSON feature
-                const feature = {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
-                    },
-                    properties: {}
-                };
-
-                // Map CSV columns to GeoJSON properties
-                Object.keys(options.propertyMap).forEach((csvColumn) => {
-                    const geojsonProperty = options.propertyMap[csvColumn];
-                    let value = row[csvColumn];
-
-                    // Perform type conversion if specified
-                    if (typeof geojsonProperty.type === 'number') {
-                        value = parseFloat(value);
-                    } else if (geojsonProperty.type === 'boolean') {
-                        value = value === '1'; // Convert to boolean
-                    } else if (geojsonProperty.type === 'date') {
-                        value = new Date(value); // Convert to Date object
+                console.log(row)
+                if ('Borough Digit' in row && 'Block' in row) {
+                    const boroughDigit = parseInt(row['Borough Digit']);
+                    const block = parseInt(row['Block']);
+        
+                    // Filter rows based on conditions (if columns exist)
+                    if (boroughDigit === 1 && block <= 130) {
+                        // Convert each row into a GeoJSON feature
+                        const feature = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
+                            },
+                            properties: {}
+                        }; // Map CSV columns to GeoJSON properties
+                        Object.keys(options.propertyMap).forEach((csvColumn) => {
+                            const geojsonProperty = options.propertyMap[csvColumn];
+                            let value = row[csvColumn];
+    
+                            // Perform type conversion if specified
+                            if (typeof geojsonProperty.type === 'number') {
+                                value = parseFloat(value);
+                            } else if (geojsonProperty.type === 'boolean') {
+                                value = value === '1'; // Convert to boolean
+                            } else if (geojsonProperty.type === 'date') {
+                                value = new Date(value); // Convert to Date object
+                            }
+    
+                            feature.properties[geojsonProperty.name] = value;
+                        });
+    
+                        geojsonFeatures.push(feature);
                     }
 
-                    feature.properties[geojsonProperty.name] = value;
-                });
+                } else {
+                    // Convert each row into a GeoJSON feature
+                    const feature = {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [parseFloat(row[options.longitudeField]), parseFloat(row[options.latitudeField])]
+                        },
+                        properties: {}
+                    };
 
-                geojsonFeatures.push(feature);
+                    // Map CSV columns to GeoJSON properties
+                    Object.keys(options.propertyMap).forEach((csvColumn) => {
+                        const geojsonProperty = options.propertyMap[csvColumn];
+                        let value = row[csvColumn];
+
+                        // Perform type conversion if specified
+                        if (typeof geojsonProperty.type === 'number') {
+                            value = parseFloat(value);
+                        } else if (geojsonProperty.type === 'boolean') {
+                            value = value === '1'; // Convert to boolean
+                        } else if (geojsonProperty.type === 'date') {
+                            value = new Date(value); // Convert to Date object
+                        }
+
+                        feature.properties[geojsonProperty.name] = value;
+                    });
+
+                    geojsonFeatures.push(feature);
+                }     
             });
 
         const geojson = {
@@ -101,10 +168,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add GeoJSON layer to the map using provided options
         addGeoJSONLayerToMap(geojson, options.layerOptions);
+        return geojson; // Return the GeoJSON data if needed
+
     }
+
     // Call the function to fetch CSV data and convert to GeoJSON
     const sheds = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
-    const publicSpaces = 'https://docs.google.com/spreadsheets/d/1nz0-crxwlc4iWhod5h9m_Av_7Eu4OhCLs-KZ5okArDQ/gviz/tq?tqx=out:csv&sheet=public_space_pedestrian_estimate';
+    const publicSpaces = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSg6HfyloZiH9VxTjBchen0mDYhtv3hvlqLNNLXzmO5DaVM8NJHN3_ODcBlJ4PawKltLSxodDDT0iwk/pub?gid=0&single=true&output=csv';
+    const events = 'data/placemaking_events.csv';
+    const art = 'data/public_art.csv';
 
     // Define options for CSV to GeoJSON conversion
     const shedsConversion = {
@@ -121,8 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'Sidewalk Shed/Linear Feet': { name: 'SidewalkShedLinearFeet', type: 'number' },
             'Construction Material': { name: 'ConstructionMaterial', type: 'string' },
             'Current Job Status': { name: 'CurrentJobStatus', type: 'string' },
-            'BIN Number': { name: 'BINNumber', type: 'number' },
-            'Community Board': { name: 'CommunityBoard', type: 'number' },
+            'Borough Digit': { name: 'BoroughDigit', type: 'number' },
+            'Block': { name: 'Block', type: 'number' },
             'Applicant Business Name': { name: 'ApplicantBusinessName', type: 'string' },
             'House Number': { name: 'HouseNumber', type: 'string' },
             'Street Name': { name: 'StreetName', type: 'string' },
@@ -253,6 +325,120 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    const eventsConversion = {
+        //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
+        longitudeField: 'Building: Geolocation Fields (Longitude)',
+        latitudeField: 'Building: Geolocation Fields (Latitude)',
+        propertyMap: {
+            'Placemaking: Placemaking Program': { name: 'program', type: 'string' },
+            'Building: Building Street': { name: 'address', type: 'string' },
+            'Description': { name: 'description', type: 'string' },
+            'End date': { name: 'endDate', type: 'date' },
+            'Start date': { name: 'startDate', type: 'date' },
+            'Placemaking Event': { name: 'placemakingEvent', type: 'string' },
+            'Partner Organization': { name: 'partnerOrganization', type: 'string' }
+        },
+        layerOptions: {
+            sourceId: 'adny-events-csv',
+            layerId: 'adny-events',
+            layerType: 'circle',
+            paint: {
+                'circle-color': '#fc59a3', 
+                'circle-radius': 6,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#000'
+            },
+            visibility: "none",
+            onClick: function(e) {
+                let name = e.features[0].properties["placemakingEvent"];
+                let detail = e.features[0].properties["address"];
+                let size = e.features[0].properties["partnerOrganization"];
+
+                let startDate = new Date(e.features[0].properties["startDate"]);
+                let endDate = new Date(e.features[0].properties["endDate"]);
+                let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+                let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+                let startyear = startDate.getFullYear();
+                let startmonth = String(startDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+                let startday = String(startDate.getDate()).padStart(2, '0');
+                let endyear = endDate.getFullYear();
+                let endmonth = String(endDate.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+                let endday = String(endDate.getDate()).padStart(2, '0');
+                let formattedStartDate = `${startyear}-${startmonth}-${startday}`;
+                let formattedEndDate = `${endyear}-${endmonth}-${endday}`;
+            
+                // Construct the road view URL with the extracted latitude and longitude
+                let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+            
+                // Create the HTML content for the popup
+                let popupContent = `
+                    ADNY Placemaking Events
+                    <h1>${name}</h1>
+                    <h2>${size}</h2>
+                    ${detail}
+                    <br>
+                    from ${formattedStartDate} to ${formattedEndDate}
+                    <br>
+                    <a href="${roadViewUrl}" target="_blank">See Road View</a>
+                `;
+            
+                // Create a new popup and set its content
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            }
+        }
+    };
+
+    const artConversion = {
+        //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
+        longitudeField: 'Building: Geolocation Fields (Longitude)',
+        latitudeField: 'Building: Geolocation Fields (Latitude)',
+        propertyMap: {
+            'Account: Publication Name': { name: 'program', type: 'string' },
+            'Account: Billing Address': { name: 'address', type: 'string' },
+        },
+        layerOptions: {
+            sourceId: 'adny-art-csv',
+            layerId: 'adny-art',
+            layerType: 'circle',
+            paint: {
+                'circle-color': '#b433f9', 
+                'circle-radius': 6,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#000'
+            },
+            visibility: "none",
+            onClick: function(e) {
+                let name = e.features[0].properties["program"];
+                let detail = e.features[0].properties["address"];
+
+                let lat = e.lngLat.lat.toFixed(14); // Extract latitude and round to 6 decimal places
+                let lng = e.lngLat.lng.toFixed(14); // Extract longitude and round to 6 decimal places
+                
+                // Construct the road view URL with the extracted latitude and longitude
+                let roadViewUrl = `https://roadview.planninglabs.nyc/view/${lng}/${lat}`;
+            
+                // Create the HTML content for the popup
+                let popupContent = `
+                    ADNY Identified Public Art
+                    <h1>${name}</h1>
+                    <br>
+                    ${detail}
+                    <br>
+                    <a href="${roadViewUrl}" target="_blank">See Road View</a>
+                `;
+            
+                // Create a new popup and set its content
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            }
+        }
+    };
+
     // Function to attach or detach the mousemove event listener based on layer visibility
     function toggleMouseMoveListener(visible) {
         let estimationInfoElement = document.getElementById('estimation-info');
@@ -303,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //NYC DATA ON PARKS
         map.addSource('nyc-parks', {
             type: 'geojson',
-            data: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000'
+            data: 'https://data.cityofnewyork.us/resource/enfh-gkve.geojson?$limit=10000&councildistrict=1'
         });
 
         map.addLayer({
@@ -383,7 +569,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // //ADNY Public Spaces Database
         fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
-
+        // //ADNY event
+        fetchCSVAndConvertToGeoJSON(events, eventsConversion);
+        // //ADNY art
+        fetchCSVAndConvertToGeoJSON(art, artConversion);
         //DOB SHED DATA
         fetchCSVAndConvertToGeoJSON(sheds, shedsConversion);
 
@@ -440,7 +629,6 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/rvih-nhyn.geojson?$limit=1000'
         });
-
         map.addLayer({
             'id': 'nyc-pops-points',
             'type': 'circle',
@@ -495,9 +683,9 @@ document.addEventListener('DOMContentLoaded', function() {
         //https://data.cityofnewyork.us/resource/buis-pvji.geojson
         map.addSource('nyc-od-landmarks', {
             type: 'geojson',
-            data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000'
+            data: 'https://data.cityofnewyork.us/resource/buis-pvji.geojson?$limit=2000&$where=block%20<=%20130%20AND%20borough=%27MN%27'
         });
-
+        
         map.addLayer({
             'id': 'nyc-landmarks',
             'type': 'fill',
@@ -591,7 +779,7 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/uiay-nctu.geojson?$limit=1000'
         });
-
+        
         map.addLayer({
             'id': 'nyc-openstreet-lines',
             'type': 'line',
@@ -732,7 +920,9 @@ document.addEventListener('DOMContentLoaded', function() {
             "nyc-train-lines",
             "nyc-landmarks",
             "nyc-active-sheds",
-            "exteros-locations"
+            "exteros-locations",
+            "adny-art",
+            "adny-events"
         ];
     
     // Set up the corresponding toggle button for each layer.
@@ -748,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.id = id;
         link.href = '#';
         link.textContent = transformLayerId(id);
-        if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')){
+        if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')&&(link.id !='adny-art')&&(link.id !='adny-events')){
             link.className = 'activeToggle';
         };
 
@@ -809,4 +999,98 @@ document.addEventListener('DOMContentLoaded', function() {
             proximity: "-74.01008569208115, 40.70756158972661"
         })
     );
+
+    // function downloadMapImage() {
+    //     var canvas = map.getCanvas();
+    //     var image = canvas.toDataURL('image/png');
+
+    //     // Create a temporary anchor element
+    //     var link = document.createElement('a');
+    //     link.href = image;
+    //     link.download = 'map_image.png';
+    //     document.body.appendChild(link);
+
+    //     // Trigger the download
+    //     link.click();
+
+    //     // Clean up
+    //     document.body.removeChild(link);
+    // }
+
+    // // Add click event listener to download button
+    // document.getElementById('downloadButton').addEventListener('click', function() {
+    //     downloadMapImage();
+    // });
+
+    // Function to download map image with HTML elements
+    function downloadMapImage() {
+        // Combine map and HTML elements into a single container for capture
+        var mapContainer = document.getElementById('mapContainer');
+
+        // Use html2canvas to capture the combined container
+        html2canvas(mapContainer).then(function(canvas) {
+            // Convert canvas to image URL
+            var imageURL = canvas.toDataURL('image/png');
+
+            // Create a temporary anchor element
+            var link = document.createElement('a');
+            link.href = imageURL;
+            link.download = 'map_image.png';
+            document.body.appendChild(link);
+
+            // Trigger the download
+            link.click();
+
+            // Clean up
+            document.body.removeChild(link);
+        });
+    }
+
+    // Add click event listener to download button
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        downloadMapImage();
+    });
+
+
+    document.getElementById('dataDownloadButton').addEventListener('click', async () => {
+        const today = new Date().toISOString().split('T')[0];
+
+        // Iterate over each dataset and initiate file download
+        for (const dataset of datasets) {
+            const { name, endpoint, fileType } = dataset;
+    
+            if (fileType === 'geojson') {
+                // Download CSV from endpoint
+                const filename = `${name}-${today}.geojson`;
+                await downloadCsvFromEndpoint(endpoint, filename);
+            } else if (fileType === 'csv') {
+                // Convert CSV to GeoJSON and save the file
+                const filename = `${name}-${today}.csv`;
+                await downloadCsvFromEndpoint(endpoint, filename);
+            }
+        }
+    
+        // All files have been downloaded or generated
+        console.log('All files downloaded or generated successfully.');
+    });
+    
+    // Function to fetch CSV data from endpoint and initiate download
+    async function downloadCsvFromEndpoint(endpoint, filename) {
+        const response = await fetch(endpoint);
+        const csvData = await response.text();
+        const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+
+        // Create download link for CSV file
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(csvBlob);
+        downloadLink.download = filename;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+
+        // Trigger download when link is clicked
+        downloadLink.click();
+
+        // Clean up: remove the download link element
+        document.body.removeChild(downloadLink);
+    }
 });
