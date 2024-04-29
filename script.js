@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call the function to fetch CSV data and convert to GeoJSON
     const sheds = 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv';
-    const publicSpaces = 'https://docs.google.com/spreadsheets/d/1nz0-crxwlc4iWhod5h9m_Av_7Eu4OhCLs-KZ5okArDQ/gviz/tq?tqx=out:csv&sheet=public_space_pedestrian_estimate';
+    const publicSpaces = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSg6HfyloZiH9VxTjBchen0mDYhtv3hvlqLNNLXzmO5DaVM8NJHN3_ODcBlJ4PawKltLSxodDDT0iwk/pub?gid=0&single=true&output=csv';
 
     // Define options for CSV to GeoJSON conversion
     const shedsConversion = {
