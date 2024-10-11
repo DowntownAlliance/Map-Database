@@ -24,6 +24,11 @@ const datasets = [
         endpoint: 'https://nycdob.github.io/ActiveShedPermits/data/Active_Sheds2.csv',
         fileType: 'csv'
     },  
+    {
+        name: 'NYC Aerial',
+        endpoint: 'https://maps.nyc.gov/xyz/1.0.0/photo/2018/{z}/{x}/{y}.png8',
+        fileType: 'raster'
+    },  
 ];
 
 
@@ -324,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
-
     const eventsConversion = {
         //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
         longitudeField: 'Building: Geolocation Fields (Longitude)',
@@ -390,7 +394,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
-
     const artConversion = {
         //Electricity on site	# of outlets + voltage	Lighting	Under Construction	ADNY Installation (Name, date)	Existing Public Art Name	Artist	Water Street Rezoning (Y/N)	Property Owner	Building Manager Name	Salesforce: Tenant/Location Created	Record Type	Primary Category	Title	Contact Information	Contact/Title (2)	Contact Information (2)	Notes	match	geometry
         longitudeField: 'Building: Geolocation Fields (Longitude)',
@@ -450,6 +453,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     map.on('load', function () {
+        // NYC Aerial
+        map.addSource('nyc-aerial-2018', {
+            type: 'raster',
+            tiles: [
+                'https://maps.nyc.gov/xyz/1.0.0/photo/2018/{z}/{x}/{y}.png8'
+            ],
+            tileSize: 256,
+            minzoom: 8,
+            maxzoom: 19
+        });
+    
+        map.addLayer({
+            id: 'nyc-aerial',
+            type: 'raster',
+            source: 'nyc-aerial-2018',
+            paint: {
+                'raster-opacity': 1 
+            },
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'none'
+            }
+        });
 
         //ADNY Pedestrian Estimation BigBelly
         map.addSource('adny-ped', {
@@ -791,6 +817,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        //NYC Street Condition
+        map.addSource('nyc-street-conditions', {
+            type: 'geojson',
+            data: 'https://data.cityofnewyork.us/resource/6yyb-pb25.geojson?$where=within_circle(the_geom,%2040.707636,%20-74.0130,%20900)'
+        });
+        
+        map.addLayer({
+            'id': 'nyc-street-conditions-lines',
+            'type': 'line',
+            'source': 'nyc-street-conditions',
+            'paint': {
+                'line-color': [
+                    'match',
+                    ['get', 'ratinglaye'], // Get the value from the 'ratinglaye' field
+                    'GOOD', '#3240a8',     // Blue for 'GOOD'
+                    'FAIR', '#ADD8E6',     // Light blue for 'FAIR'
+                    'POOR', '#FF0000',     // Red for 'POOR'
+                    /* fallback */ '#AAAAAA'  // Default color if no match
+                ],
+                'line-width': 3,
+                'line-opacity': 0.7,
+            },
+            'layout': {
+                // Make the layer visible by default.
+                'visibility': 'none'
+                }
+        });
+
         //ADNY EXTEROS LOCATIONS
         map.addSource('exteros-points', {
             type: 'geojson',
@@ -922,8 +976,21 @@ document.addEventListener('DOMContentLoaded', function() {
             "nyc-active-sheds",
             "exteros-locations",
             "adny-art",
-            "adny-events"
+            "adny-events",
+            "nyc-aerial",
+            "nyc-street-conditions-lines"
         ];
+    const offLayersIds = [
+        'nyc-street-conditions-lines',
+        'nyc-parks-polygons',
+        'nyc-pops-points',
+        'nyc-landmarks',
+        'nyc-active-sheds',
+        'exteros-locations',
+        'adny-art',
+        'adny-events',
+        "nyc-aerial",
+    ];
     
     // Set up the corresponding toggle button for each layer.
     for (const id of toggleableLayerIds) {
@@ -938,10 +1005,11 @@ document.addEventListener('DOMContentLoaded', function() {
         link.id = id;
         link.href = '#';
         link.textContent = transformLayerId(id);
-        if ((link.id != 'nyc-parks-polygons')&&(link.id != 'nyc-pops-points')&&(link.id != 'nyc-landmarks')&&(link.id !='nyc-active-sheds')&&(link.id !='exteros-locations')&&(link.id !='adny-art')&&(link.id !='adny-events')){
+        
+        // Use the list in the if statement
+        if (!offLayersIds.includes(link.id)) {
             link.className = 'activeToggle';
-        };
-
+        }
 
         
         // Show or hide layer when the toggle is clicked.
