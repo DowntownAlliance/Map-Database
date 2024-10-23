@@ -1,3 +1,23 @@
+function toTitleCase(str) {
+    return str.replace(
+      /\w\S*/g,
+      text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+    );
+}
+
+function getFormattedDate() {
+    const today = new Date();
+    
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(today.getDate()).padStart(2, '0');
+
+    // Construct the date string in the required format
+    const formattedDate = `${year}-${month}-${day}T00:00:00.000`;
+    
+    return formattedDate;
+}
+
 const datasets = [
     {
         name: 'NYC POPS',
@@ -77,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         $.csv.toObjects(csvData, { headers: true })
             .forEach((row) => {
-                console.log(row)
+                // console.log(row)
                 if ('Borough Digit' in row && 'Block' in row) {
                     const boroughDigit = parseInt(row['Borough Digit']);
                     const block = parseInt(row['Block']);
@@ -817,14 +837,54 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // NYC Street Construction
+        const todayFormatted = getFormattedDate();
+        console.log(`https://data.cityofnewyork.us/resource/i6b5-j7bu.geojson?$where=within_circle(the_geom, 40.707636, -74.0130, 900) AND work_start_date >= ${todayFormatted} AND work_end_date >= ${todayFormatted}`)
+        map.addSource('nyc-street-construction-block', {
+            type: 'geojson',
+            data: `https://data.cityofnewyork.us/resource/i6b5-j7bu.geojson?$where=within_circle(the_geom, 40.707636, -74.0130, 900) AND work_start_date <= '${todayFormatted}' AND work_end_date >= '${todayFormatted}'`
+        });
+        map.addLayer({
+            'id': 'nyc-street-construction',
+            'type': 'line',
+            'source': 'nyc-street-construction-block',
+            'paint': {
+                'line-color': '#FFBF00', 
+                'line-width': 10,
+                'line-opacity': .7
+            },
+            'layout': {
+                'visibility': 'none'
+                }
+        });
+
+        map.on('click', 'nyc-street-construction', function(e){
+            let name = e.features[0].properties["onstreetname"];
+            let from = e.features[0].properties["fromstreetname"];
+            let to = e.features[0].properties["tostreetname"];
+            let date = new Date(e.features[0].properties["work_end_date"]);
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+            let day = String(date.getDate()).padStart(2, '0');
+            let formattedDate = `${year}-${month}-${day}`;
+            let purpose = e.features[0].properties['purpose']
+            let purposeFormated = purpose.charAt(0).toUpperCase() + purpose.substring(1).toLowerCase()
+
+        
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML("DOT Street Construction <br> <h1>"+ toTitleCase(name) + '</h1> <br>Between ' + toTitleCase(from) + ' and ' + toTitleCase(to) + '<br><br> Purpose: "' + purposeFormated + '."<br>Ends: ' + formattedDate)
+                .addTo(map);
+        });
+
+
         //NYC Street Condition
         map.addSource('nyc-street-conditions', {
             type: 'geojson',
             data: 'https://data.cityofnewyork.us/resource/6yyb-pb25.geojson?$where=within_circle(the_geom,%2040.707636,%20-74.0130,%20900)'
         });
-        
         map.addLayer({
-            'id': 'nyc-street-conditions-lines',
+            'id': 'nyc-pavement-rating',
             'type': 'line',
             'source': 'nyc-street-conditions',
             'paint': {
@@ -843,6 +903,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Make the layer visible by default.
                 'visibility': 'none'
                 }
+        });
+
+        map.on('click', 'nyc-pavement-rating', function(e){
+            let name = e.features[0].properties["onstreetna"];
+            let from = e.features[0].properties["fromstreet"];
+            let to = e.features[0].properties["tostreetna"];
+            let date = new Date(e.features[0].properties["inspection"]);
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based (0 = January)
+            let day = String(date.getDate()).padStart(2, '0');
+            let formattedDate = `${year}-${month}-${day}`;
+            let rating = e.features[0].properties['manualrati']
+
+        
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML("DOT Pavement Rating <br> <h1>"+ toTitleCase(name) + '</h1> <br>Between ' + toTitleCase(from) + ' and ' + toTitleCase(to) + '<br> Rating: ' + rating + '/10  |  Inspected ' + formattedDate)
+                .addTo(map);
         });
 
         //ADNY EXTEROS LOCATIONS
@@ -900,7 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var layerIds = style.layers.map(layer => layer.id);
 
         // Log the list of layer IDs to the console
-        console.log('Layer IDs:', layerIds);
+        // console.log('Layer IDs:', layerIds);
 
     });
 
@@ -925,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var zoom = map.getZoom(); // Get the current zoom level
 
         // Print the coordinates to the console
-        console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat+ ', Zoom: ' + zoom);
+        // console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat+ ', Zoom: ' + zoom);
     });
 
 
@@ -978,10 +1056,12 @@ document.addEventListener('DOMContentLoaded', function() {
             "adny-art",
             "adny-events",
             "nyc-aerial",
-            "nyc-street-conditions-lines"
+            "nyc-pavement-rating",
+            'nyc-street-construction'
+
         ];
     const offLayersIds = [
-        'nyc-street-conditions-lines',
+        'nyc-pavement-rating',
         'nyc-parks-polygons',
         'nyc-pops-points',
         'nyc-landmarks',
@@ -990,6 +1070,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'adny-art',
         'adny-events',
         "nyc-aerial",
+        'nyc-street-construction'
+
     ];
     
     // Set up the corresponding toggle button for each layer.
@@ -1139,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         // All files have been downloaded or generated
-        console.log('All files downloaded or generated successfully.');
+        // console.log('All files downloaded or generated successfully.');
     });
     
     // Function to fetch CSV data from endpoint and initiate download
