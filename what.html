@@ -1,0 +1,35 @@
+<!DOCTYPE html><html><head><title></title><script type="text/javascript" src="https://unpkg.com/react@16.14.0/umd/react.production.min.js"></script><script type="text/javascript" src="https://unpkg.com/react-dom@16.14.0/umd/react-dom.production.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v6.12.0/build/ol.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script><script type="text/javascript" src="https://streetsmart.cyclomedia.com/api/v23.5/StreetSmartApi.js"></script><link rel="stylesheet" href="stylesheets/style.css"></head><body><div id="streetsmartApi"></div><script type="text/javascript">var $ = document.querySelector.bind(document);
+
+    function openByQuery() {
+        StreetSmartApi.open('583602.764038653,4506738.625194923', {
+            viewerType: [StreetSmartApi.ViewerType.PANORAMA, StreetSmartApi.ViewerType.OBLIQUE],
+            srs: 'EPSG:26918',
+            closable: false,
+            maximizable: false,
+        })
+        .catch(
+            function(reason) {
+                console.log('Failed to create component(s) through API: ' + reason);
+            }
+        )
+    }
+    
+    window.onload = function() {
+      StreetSmartApi.init({
+          targetElement: $('#streetsmartApi'),
+          username: 'PlanningNYC',
+          password: '@PlanAPI212\!NYC',
+          apiKey: 'qjMp2DQFevgdSD8lCXI1eD0BCDEtOroJW3kRyvYlifMtODo9GXMl2LM5a_URmLgR',
+          srs: 'EPSG:26918',
+          locale: 'en-us',
+          options: { viewerType: ['@@ViewerType/POINTCLOUD'] },
+      }).then(
+          function() {
+              console.log('Api: init: success!');
+              openByQuery();
+          },
+          function(err) {
+              console.log('Api: init: failed. Error: ', err);
+          }
+      );
+    };</script></body></html>
