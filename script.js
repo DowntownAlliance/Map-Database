@@ -982,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Good', '#0c6b20',  // Green for Good health
                     'Fair', '#56750c',  // Yellow for Fair health
                     'Poor', '#a8b063',  // Red for Poor health
-                    '#ccc'  // Default color (if no health value matches)
+                    '#964B00'  // Default color (if no health value matches)
                 ],
                 "circle-stroke-width": 1,
                 "circle-stroke-color": "#000"
