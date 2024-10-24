@@ -923,6 +923,75 @@ document.addEventListener('DOMContentLoaded', function() {
                 .addTo(map);
         });
 
+        // NYC PUBLIC RESTROOMS
+        map.addSource('nyc-public-restrooms-points', {
+            type: 'geojson',
+            data: "https://data.cityofnewyork.us/resource/i7jb-7jku.geojson?$where=within_circle(location_1,%2040.707636,%20-74.0130,%20900)&status='Operational'"
+        });
+        map.addLayer({
+            'id': 'nyc-public-restrooms',
+            'type': 'circle',
+            'source': 'nyc-public-restrooms-points',
+            'paint': {
+                'circle-color': '#90d2f5', // Adjust color as needed
+                'circle-radius': 6,
+                "circle-stroke-width": 1,
+                "circle-stroke-color": "#000"
+            },
+            'layout': {
+            'visibility': 'none'
+            }
+        });
+
+        map.on('click', 'nyc-public-restrooms', function(e){
+            let name = e.features[0].properties["facility_name"];
+            let accessibility = e.features[0].properties["accessibility"];
+            let hours = e.features[0].properties["hours_of_operation"];
+            let type = e.features[0].properties['restroom_type']
+            let additional_notes = e.features[0].properties['additional_notes']
+
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML("NYC Public Restrooms <br> <h1>"+ toTitleCase(name) + '</h1> <br>' + type + ' <br> ' + accessibility + '<br><br> ' + hours)
+                .addTo(map);
+        });
+
+        // NYC TREE CENSUS
+        map.addSource('nyc-tree-points', {
+            type: 'geojson',
+            data: "https://data.cityofnewyork.us/resource/5rq2-4hqu.geojson?$where=within_circle(the_geom,%2040.707636,%20-74.0130,%20900)"
+        });
+        map.addLayer({
+            'id': '2015-tree-census',
+            'type': 'circle',
+            'source': 'nyc-tree-points',
+            'paint': {
+                // Circle radius based on 'tree_dbh' (Diameter at Breast Height)
+                'circle-radius': [
+                    'interpolate',
+                    ['linear'],
+                    ['to-number', ['get', 'tree_dbh']], // Get the 'tree_dbh' property from the feature
+                    0, 4, // Radius for tree_dbh <= 5
+                    5, 6,  // Radius for 5 < tree_dbh <= 10
+                    10, 8  // Radius for tree_dbh > 10
+                ],
+                // Circle color based on 'health'
+                'circle-color': [
+                    'match',
+                    ['get', 'health'], // Get the 'health' property from the feature
+                    'Good', '#0c6b20',  // Green for Good health
+                    'Fair', '#56750c',  // Yellow for Fair health
+                    'Poor', '#a8b063',  // Red for Poor health
+                    '#964B00'  // Default color (if no health value matches)
+                ],
+                "circle-stroke-width": 1,
+                "circle-stroke-color": "#000"
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+        });
+
         //ADNY EXTEROS LOCATIONS
         map.addSource('exteros-points', {
             type: 'geojson',
@@ -1057,7 +1126,9 @@ document.addEventListener('DOMContentLoaded', function() {
             "adny-events",
             "nyc-aerial",
             "nyc-pavement-rating",
-            'nyc-street-construction'
+            'nyc-street-construction',
+            "nyc-public-restrooms",
+            "2015-tree-census"
 
         ];
     const offLayersIds = [
@@ -1070,7 +1141,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'adny-art',
         'adny-events',
         "nyc-aerial",
-        'nyc-street-construction'
+        'nyc-street-construction',
+        "nyc-public-restrooms",
+        "2015-tree-census"
 
     ];
     
