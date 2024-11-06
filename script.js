@@ -632,7 +632,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-
         // //ADNY Public Spaces Database
         fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
         // //ADNY event
@@ -943,6 +942,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 .addTo(map);
         });
 
+        // STREET WIDTH
+        map.addSource('nyc-streetwidth-lines', {
+            type: 'geojson',
+            data: 'data/sidewalkwidths_nyc_adny.geojson'
+        });
+
+        map.addLayer({
+            'id': 'nyc-street-widths',
+            'type': 'line',
+            'source': 'nyc-streetwidth-lines',
+            'paint': {
+                // Use a color scale to represent street width
+                'line-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'width'], // Get the width property from the data
+                    0, '#ff4500',     // Narrow
+                    9, '#ff8c00',     // Standard
+                    15, '#98fb98',    // Wide
+                    21, '#00bfff'     // Very Wide
+                ],
+                'line-width': 2.5,
+                'line-opacity': 1
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+        });
+
+        map.on('click', 'nyc-street-widths', function(e){
+            let width = e.features[0].properties["width"];
+
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML("NYC Street Width <br> <h1>"+ width + ' feet wide</h1>')
+                .addTo(map);
+        });
+
+
         // NYC PUBLIC RESTROOMS
         map.addSource('nyc-public-restrooms-points', {
             type: 'geojson',
@@ -1149,7 +1187,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'nyc-street-construction',
             "nyc-public-restrooms",
             "2015-tree-census",
-            'nyc-bike-paths'
+            'nyc-bike-paths',
+            'nyc-street-widths'
 
         ];
     const offLayersIds = [
@@ -1165,8 +1204,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'nyc-street-construction',
         "nyc-public-restrooms",
         "2015-tree-census",
-        'nyc-bike-paths'
-
+        'nyc-bike-paths',
+        'nyc-street-widths'
     ];
     
     // Set up the corresponding toggle button for each layer.
