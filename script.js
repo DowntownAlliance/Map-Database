@@ -612,6 +612,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        //NYC BIKE PATHS
+        map.addSource('nyc-bike-lines', {
+            type: 'geojson',
+            data: 'https://data.cityofnewyork.us/resource/mzxg-pwib.geojson?$where=within_box(the_geom,40.6885615,-74.0300856,40.728561,-73.990856)&$limit=100000000'
+        });
+
+        map.addLayer({
+            'id': 'nyc-bike-paths',
+            'type': 'line',
+            'source': 'nyc-bike-lines',
+            'paint': {
+                'line-color': '#52de57',
+                'line-width': 2,
+                'line-opacity': .8
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+        });
+
 
         // //ADNY Public Spaces Database
         fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
@@ -1128,7 +1148,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "nyc-pavement-rating",
             'nyc-street-construction',
             "nyc-public-restrooms",
-            "2015-tree-census"
+            "2015-tree-census",
+            'nyc-bike-paths'
 
         ];
     const offLayersIds = [
@@ -1143,7 +1164,8 @@ document.addEventListener('DOMContentLoaded', function() {
         "nyc-aerial",
         'nyc-street-construction',
         "nyc-public-restrooms",
-        "2015-tree-census"
+        "2015-tree-census",
+        'nyc-bike-paths'
 
     ];
     
