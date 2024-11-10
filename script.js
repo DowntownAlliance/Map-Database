@@ -612,6 +612,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        //NYC BIKE PATHS
+        map.addSource('nyc-bike-lines', {
+            type: 'geojson',
+            data: 'https://data.cityofnewyork.us/resource/mzxg-pwib.geojson?$where=within_box(the_geom,40.6885615,-74.0300856,40.728561,-73.990856)&$limit=100000000'
+        });
+
+        map.addLayer({
+            'id': 'nyc-bike-paths',
+            'type': 'line',
+            'source': 'nyc-bike-lines',
+            'paint': {
+                'line-color': '#52de57',
+                'line-width': 2,
+                'line-opacity': .8
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+        });
 
         // //ADNY Public Spaces Database
         fetchCSVAndConvertToGeoJSON(publicSpaces, publicConversion);
@@ -923,6 +942,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 .addTo(map);
         });
 
+        // STREET WIDTH
+        map.addSource('nyc-streetwidth-lines', {
+            type: 'geojson',
+            data: 'data/sidewalkwidths_nyc_adny.geojson'
+        });
+
+        map.addLayer({
+            'id': 'nyc-street-widths',
+            'type': 'line',
+            'source': 'nyc-streetwidth-lines',
+            'paint': {
+                // Use a color scale to represent street width
+                'line-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'width'], // Get the width property from the data
+                    0, '#ff4500',     // Narrow
+                    9, '#ff8c00',     // Standard
+                    15, '#98fb98',    // Wide
+                    21, '#00bfff'     // Very Wide
+                ],
+                'line-width': 2.5,
+                'line-opacity': 1
+            },
+            'layout': {
+                'visibility': 'none'
+            }
+        });
+
+        map.on('click', 'nyc-street-widths', function(e){
+            let width = e.features[0].properties["width"];
+
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML("NYC Street Width <br> <h1>"+ width + ' feet wide</h1>')
+                .addTo(map);
+        });
+
+
         // NYC PUBLIC RESTROOMS
         map.addSource('nyc-public-restrooms-points', {
             type: 'geojson',
@@ -1128,7 +1186,9 @@ document.addEventListener('DOMContentLoaded', function() {
             "nyc-pavement-rating",
             'nyc-street-construction',
             "nyc-public-restrooms",
-            "2015-tree-census"
+            "2015-tree-census",
+            'nyc-bike-paths',
+            'nyc-street-widths'
 
         ];
     const offLayersIds = [
@@ -1143,8 +1203,9 @@ document.addEventListener('DOMContentLoaded', function() {
         "nyc-aerial",
         'nyc-street-construction',
         "nyc-public-restrooms",
-        "2015-tree-census"
-
+        "2015-tree-census",
+        'nyc-bike-paths',
+        'nyc-street-widths'
     ];
     
     // Set up the corresponding toggle button for each layer.
